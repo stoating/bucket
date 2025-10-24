@@ -1,0 +1,24 @@
+# Use the official Clojure tools-deps image
+FROM docker.io/library/clojure:temurin-21-tools-deps
+
+# Minimal deps for installing uv and TLS
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    ca-certificates \
+    ripgrep
+
+# Install uv (to /root/.local/bin by default)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Ensure uv (and uv-installed tools) are on PATH
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install mcp-proxy via uv
+RUN uv tool install mcp-proxy
+
+# Setup an appropriate workdir inside the container.
+WORKDIR /usr/app
+
+# expose https sse port for clojure-mcp server.
+EXPOSE 7080

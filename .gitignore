@@ -1,14 +1,28 @@
-pom.xml
-pom.xml.asc
-*.jar
-*.class
-/lib/
-/classes/
-/target/
-/checkouts/
-.lein-deps-sum
-.lein-repl-history
-.lein-plugins/
-.lein-failures
+# Clojure
+.calva
+.clj-kondo
+.cpcache
+.lsp
 .nrepl-port
-.cpcache/
+.portal
+
+# dotfiles
+.devenv
+.devenv.flake.nix
+.logs
+
+# gen files
+gen/*
+
+# Virtual environments
+**/.venv
+
+# claude
+.clojure-mcp/*
+
+# codex
+.codex/*
+!.codex/config.toml
+
+# vscode
+.vscode

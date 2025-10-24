@@ -1,0 +1,4 @@
+[mcp_servers.clojure-mcp]
+type = "stdio"
+command = "mcp-proxy"
+args = ["http://localhost:7080/sse"]
