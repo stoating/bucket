@@ -61,12 +61,12 @@ in {
       # Define codex (Node CLI) from the NPM tarball
       codex = prev.stdenv.mkDerivation (finalAttrs: rec {
         pname = "codex";
-        version = "0.46.0";
+        version = "0.50.0";
 
         src = prev.fetchurl {
           url = "https://registry.npmjs.org/@openai/codex/-/codex-${version}.tgz";
           # Build once to get the correct SRI (will print "got: sha256-...")
-          sha256 = "sha256-sh4LQvIvHEnqNFa5g8h7NQsQaIk3VC/ynm9NcgCNUSM=";
+          sha256 = "sha256-3eHxe1t6zSUDTCugCDOeI6Ta1vo89OdpsFCX59HLaco=";
         };
 
         nativeBuildInputs = [

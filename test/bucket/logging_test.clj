@@ -1,5 +1,6 @@
 (ns bucket.logging-test
-  (:require [bucket.logging :as logging]
+  (:require [bucket :as bucket]
+            [bucket.logging :as logging]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest testing is are use-fixtures]]
@@ -231,7 +232,18 @@
           (is (= 1 (count logs)))
           (let [entry (first logs)]
             (is (= "* log redacted *" (:value entry))
-                "log redacts password-like content when redaction enabled")))))))
+                "log redacts password-like content when redaction enabled"))))
+
+      (testing "logging into a bucket sink"
+        (let [initial-bucket (bucket/grab :value {:status :ok})
+              updated-bucket (logging/log initial-bucket "bucket message" :level :warning)
+              logs (:logs updated-bucket)]
+          (is (map? updated-bucket))
+          (is (= {:status :ok} (:result updated-bucket)))
+          (is (= 1 (count logs)))
+          (is (= :warning (:level (first logs))))
+          (is (= "bucket message" (:value (first logs)))
+              "log appends entries to a bucket and returns the updated bucket"))))))
 
 (deftest format-log-message-test
   (testing "log message formatting"

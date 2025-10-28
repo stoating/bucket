@@ -71,15 +71,45 @@
            (:compound-patterns sensitive-patterns))
      (boolean (re-find (:url-with-credentials sensitive-patterns) input)))))
 
-(defn log
-  "Add a log entry to a log vector.
+(defprotocol LogSink
+  "Protocol for things that can accumulate log entries."
+  (-current-logs [sink] "Return the current log vector for the sink.")
+  (-with-logs [sink logs] "Return the sink updated with the provided logs vector."))
 
-   The logs vector is always the first positional argument.
+(defn- ensure-log-vector
+  "Normalize a log collection into a vector."
+  [logs]
+  (cond
+    (vector? logs) logs
+    (nil? logs) []
+    (sequential? logs) (vec logs)
+    :else []))
+
+(extend-protocol LogSink
+  clojure.lang.IPersistentVector
+  (-current-logs [sink] sink)
+  (-with-logs [_ logs] logs)
+
+  clojure.lang.IPersistentMap
+  (-current-logs [sink] (ensure-log-vector (:logs sink)))
+  (-with-logs [sink logs] (assoc sink :logs logs))
+
+  nil
+  (-current-logs [_] [])
+  (-with-logs [_ logs] logs))
+
+(defn log
+  "Add a log entry to a destination.
+
+   The destination is always the first positional argument and can be either:
+   - a log vector
+   - a Bucket map (or any map with a :logs vector)
+
    The message can be either positional (second arg) or keywordized (:value).
    Any additional parameters must use keywords.
 
    Args:
-   - logs: existing vector of log entries (always first, positional)
+   - sink: log vector or Bucket map (first, positional)
    - message: log message string (positional or :value keyword)
    - :level - log level keyword (default :info)
    - :indent - indentation level (default: same as last entry or 0)
@@ -93,14 +123,15 @@
      (log logs :value \"Hello\" :level :warning :indent 2)   ; all keyword args
      (log logs :value \"password123\" :check-pass true)      ; with password check
 
-   Returns: updated log vector with new entry appended"
-  ([logs message]
-   (log logs :value message))
-  ([logs a b & rest]
+   Returns: updated destination (vector or Bucket) with new log entry appended"
+  ([sink message]
+   (log sink :value message))
+  ([sink a b & rest]
    (let [args (if (odd? (+ 2 (count rest)))
                 (apply hash-map :value a b rest)
                 (apply hash-map a b rest))
          {:keys [value level indent check-pass indent-next]} args
+         logs (-current-logs sink)
          last-entry (peek logs)
          fallback-indent (cond
                            (nil? last-entry) 0
@@ -112,8 +143,9 @@
                           value)
          base-entry (make-entry :value actual-message :level (or level :info) :indent actual-indent)
          entry (cond-> base-entry
-                 (some? indent-next) (assoc :indent-next indent-next))]
-     (conj logs entry))))
+                 (some? indent-next) (assoc :indent-next indent-next))
+         updated-logs (conj logs entry)]
+     (-with-logs sink updated-logs))))
 
 (defn format-log-message
   "Format a log entry for output.
