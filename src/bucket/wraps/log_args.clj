@@ -1,5 +1,5 @@
 (ns bucket.wraps.log-args
-  (:require [bucket.logging :as logging]))
+  (:require [bucket.log :as log]))
 
 (defn log-args
   "Wrap a function to log invocation arguments before execution.
@@ -24,7 +24,7 @@
                                       (contains? last-entry :indent-next) (:indent-next last-entry)
                                       :else (:indent last-entry))
                         args-text (str "args: " (pr-str (dissoc opts :logs)))
-                        args-logs (logging/log logs
+                        args-logs (log/log logs
                                                args-text
                                                :indent base-indent
                                                :check-pass check-pass

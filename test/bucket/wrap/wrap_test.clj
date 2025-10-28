@@ -1,6 +1,6 @@
 (ns bucket.wrap.wrap-test
   (:require [bucket :as bucket]
-            [bucket.logging :as logging]
+            [bucket.log :as log]
             [bucket.wrap :as wrap]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
@@ -231,7 +231,7 @@
                       {:name 'outer-worker})
           wrapped-outer (wrap/wrap raw-outer {:redirect-mode :depth-aware})
           response (-> (wrapped-outer {:value 5 :logs []})
-                       (update :logs logging/log "post-outer-sentinel"))
+                       (update :logs log/log "post-outer-sentinel"))
           [outer-entry outer-args begin finish
            middle-entry middle-args
            level2-start level2-combine

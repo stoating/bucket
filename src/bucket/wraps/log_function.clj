@@ -1,6 +1,6 @@
 (ns bucket.wraps.log-function
   (:require [bin.defaults :as default]
-            [bucket.logging :as logging]))
+            [bucket.log :as log]))
 
 (defn log-function
   "Wrap a function to add entry/exit logging using indentation.
@@ -27,14 +27,14 @@
                         fname (or (some-> f meta :name str)
                                   "")
 
-                        entry-logs (logging/log logs
+                        entry-logs (log/log logs
                                                 (str "--> " fname)
                                                 :level :info
                                                 :indent indent
                                                 :indent-next indent)
                         response (f (assoc opts :logs entry-logs))
                         response-logs (or (:logs response) entry-logs)
-                        final-logs (logging/log response-logs
+                        final-logs (log/log response-logs
                                                 (str "<-- " fname)
                                                 :level :info
                                                 :indent indent

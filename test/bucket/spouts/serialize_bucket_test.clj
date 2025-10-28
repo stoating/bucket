@@ -2,7 +2,7 @@
   "Tests for bucket spouts serialize-bucket function."
   (:require [bucket :as bucket]
             [bucket.spouts.transform :as spouts]
-            [bucket.logging :as logging]
+            [bucket.log :as log]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
@@ -14,7 +14,7 @@
 
 (deftest serialize-bucket-edn-format-test
   (testing "serializes to EDN format and prints to stdout"
-    (let [logs [(logging/make-entry "Test log" :info 0)]
+    (let [logs [(log/make-entry "Test log" :info 0)]
           bucket (bucket/grab "test-result" :logs logs :meta {:key "value"})
           out-str (with-out-str
                     (let [serialized (spouts/serialize-bucket bucket :format :edn :out :stdout)]
@@ -84,7 +84,7 @@
 
 (deftest serialize-bucket-json-format-test
   (testing "serializes to valid JSON format"
-    (let [logs [(logging/make-entry "JSON test" :info 0)]
+    (let [logs [(log/make-entry "JSON test" :info 0)]
           bucket (bucket/grab {:user "alice"} :logs logs :meta {:version 1})
           out-str (with-out-str
                     (let [serialized (spouts/serialize-bucket bucket :format :json :out :stdout)]
@@ -105,7 +105,7 @@
 (deftest serialize-bucket-json-with-error-test
   (testing "serializes bucket with error to JSON"
     (let [ex (ex-info "Test error" {:code 500})
-          logs [(logging/make-entry "Error occurred" :error 0)]
+          logs [(log/make-entry "Error occurred" :error 0)]
           bucket (bucket/grab "partial-result" :logs logs :error [ex "Error context"])
           serialized (spouts/serialize-bucket bucket :format :json :out :none)
           parsed (json/read-value serialized)]
@@ -251,8 +251,8 @@
 
 (deftest serialize-bucket-roundtrip-edn-test
   (testing "EDN serialization roundtrip preserves bucket data"
-    (let [logs [(logging/make-entry "Log 1" :info 0)
-                (logging/make-entry "Log 2" :warning 4)]
+    (let [logs [(log/make-entry "Log 1" :info 0)
+                (log/make-entry "Log 2" :warning 4)]
           original (bucket/grab {:data "test"}
                                 :logs logs
                                 :meta {:version 1 :author "test"})

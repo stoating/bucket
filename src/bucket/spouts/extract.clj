@@ -1,7 +1,7 @@
 (ns bucket.spouts.extract
   "Utilities for extracting data from buckets and emitting their contents."
   (:require [bucket.error :as error]
-            [bucket.logging :as logging]
+            [bucket.log :as logging]
             [clj-ulid :as ulid]))
 
 (defn- apply-formatter

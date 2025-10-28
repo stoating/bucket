@@ -1,4 +1,4 @@
-(ns bucket.logging
+(ns bucket.log
   "Logging helpers for building and printing log entries.
 
    Log entry format: {:indent int :time inst :level keyword :value string}

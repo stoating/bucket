@@ -1,7 +1,7 @@
 (ns bucket.spouts.spill-test
   "Tests for bucket spouts spill function."
   (:require [bucket :as bucket]
-            [bucket.logging :as logging]
+            [bucket.log :as log]
             [bucket.spouts.extract :as spouts]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing use-fixtures]]
@@ -11,8 +11,8 @@
 
 (deftest spill-logs-to-stdout-only-test
   (testing "spill outputs logs to stdout only"
-    (let [logs [(logging/make-entry "First message")
-                (logging/make-entry "Second message" :level :debug :indent 4)]
+    (let [logs [(log/make-entry "First message")
+                (log/make-entry "Second message" :level :debug :indent 4)]
           bucket (bucket/grab "result-value" :logs logs)
           out-before (with-out-str
                        (let [result (spouts/spill bucket :log-out :stdout :meta-out :none)]
@@ -25,8 +25,8 @@
 
 (deftest spill-logs-to-file-only-test
   (testing "spill outputs logs to file only"
-    (let [logs [(logging/make-entry "Log to file")
-                (logging/make-entry "Another log entry" :level :warning :indent 4)]
+    (let [logs [(log/make-entry "Log to file")
+                (log/make-entry "Another log entry" :level :warning :indent 4)]
           bucket (bucket/grab "file-result" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -45,8 +45,8 @@
 
 (deftest spill-logs-to-both-stdout-and-file-test
   (testing "spill outputs logs to both stdout and file"
-    (let [logs [(logging/make-entry "First log")
-                (logging/make-entry "Second log" :level :debug :indent 4)]
+    (let [logs [(log/make-entry "First log")
+                (log/make-entry "Second log" :level :debug :indent 4)]
           bucket (bucket/grab "both-result" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -66,7 +66,7 @@
 
 (deftest spill-logs-none-test
   (testing "spill with log-out :none produces no log output"
-    (let [logs [(logging/make-entry "Should not appear")]
+    (let [logs [(log/make-entry "Should not appear")]
           bucket (bucket/grab "data" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -78,7 +78,7 @@
 
 (deftest spill-with-error-test
   (testing "spill handles error in bucket"
-    (let [logs [(logging/make-entry "Processing...")]
+    (let [logs [(log/make-entry "Processing...")]
           ex (ex-info "Something went wrong" {:detail "bad data"})
           bucket (bucket/grab "partial-result" :logs logs :error [ex "Error context"])
           temp-dir th/test-temp-root
@@ -92,7 +92,7 @@
 
 (deftest spill-meta-to-stdout-only-test
   (testing "spill outputs meta to stdout only"
-    (let [logs [(logging/make-entry "With meta")]
+    (let [logs [(log/make-entry "With meta")]
           bucket (bucket/grab "value" :logs logs :meta {:user "alice" :operation "test"})
           out-str (with-out-str
                     (let [result (spouts/spill bucket :log-out :none :meta-out :stdout)]
@@ -107,7 +107,7 @@
 
 (deftest spill-meta-to-file-only-test
   (testing "spill writes meta to file only (not stdout)"
-    (let [logs [(logging/make-entry "File meta test" :info 0)]
+    (let [logs [(log/make-entry "File meta test" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {:env "prod" :version "1.0"} :name "file-test-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -122,7 +122,7 @@
 
 (deftest spill-meta-to-both-stdout-and-file-test
   (testing "spill outputs meta to both stdout and file"
-    (let [logs [(logging/make-entry "Both outputs" :info 0)]
+    (let [logs [(log/make-entry "Both outputs" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {:service "api" :request-id "123"} :name "both-output-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -140,7 +140,7 @@
 
 (deftest spill-meta-none-test
   (testing "spill with meta-out :none produces no meta output"
-    (let [logs [(logging/make-entry "Default behavior" :info 0)]
+    (let [logs [(log/make-entry "Default behavior" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {:should-not-appear "in output"})
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -154,7 +154,7 @@
 
 (deftest spill-empty-meta-test
   (testing "spill handles empty meta gracefully"
-    (let [logs [(logging/make-entry "Empty meta" :info 0)]
+    (let [logs [(log/make-entry "Empty meta" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {})
           out-str (with-out-str
                     (let [result (spouts/spill bucket :log-out :none :meta-out :stdout)]
@@ -164,7 +164,7 @@
 
 (deftest spill-complex-meta-test
   (testing "spill handles complex nested metadata"
-    (let [logs [(logging/make-entry "Complex meta" :info 0)]
+    (let [logs [(log/make-entry "Complex meta" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {:user {:name "bob" :id 42}
                                                         :context {:env "staging" :region "us-west"}
                                                         :tags ["critical" "monitored"]})
@@ -182,8 +182,8 @@
 
 (deftest spill-logs-and-meta-to-stdout-test
   (testing "spill outputs both logs and meta to stdout"
-    (let [logs [(logging/make-entry "Log entry 1" :info 0)
-                (logging/make-entry "Log entry 2" :debug 4)]
+    (let [logs [(log/make-entry "Log entry 1" :info 0)
+                (log/make-entry "Log entry 2" :debug 4)]
           bucket (bucket/grab "combined-result" :logs logs :meta {:combined "test" :count 2})
           temp-dir th/test-temp-root
           out-str (with-out-str
@@ -199,9 +199,9 @@
 
 (deftest spill-everything-test
   (testing "spill with logs, error, and meta all present"
-    (let [logs [(logging/make-entry "Starting" :info 0)
-                (logging/make-entry "Processing" :info 4)
-                (logging/make-entry "Warning occurred" :warning 4)]
+    (let [logs [(log/make-entry "Starting" :info 0)
+                (log/make-entry "Processing" :info 4)
+                (log/make-entry "Warning occurred" :warning 4)]
           ex (ex-info "Partial failure" {:code 500})
           bucket (bucket/grab "partial-data"
                               :logs logs
@@ -227,7 +227,7 @@
 
 (deftest spill-require-result-default-test
   (testing "spill returns nil when result is nil by default"
-    (let [logs [(logging/make-entry "Returning nil" :info 0)]
+    (let [logs [(log/make-entry "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
                     (let [result (spouts/spill bucket :log-out :stdout :meta-out :none)]
@@ -243,7 +243,7 @@
 
 (deftest spill-require-result-false-test
   (testing "spill returns nil when result is nil and require-result is false"
-    (let [logs [(logging/make-entry "Returning nil" :info 0)]
+    (let [logs [(log/make-entry "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
                     (let [result (spouts/spill bucket :log-out :stdout :meta-out :none :require-result false)]
@@ -253,7 +253,7 @@
 
 (deftest spill-default-outputs-both-test
   (testing "spill defaults to outputting both logs and meta to both stdout and file"
-    (let [logs [(logging/make-entry "Default test" :info 0)]
+    (let [logs [(log/make-entry "Default test" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {:test "default"})
           temp-dir th/test-temp-root
           out-str (with-out-str

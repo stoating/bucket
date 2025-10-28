@@ -1,6 +1,6 @@
 (ns bucket.wrap.redirect-stdout-test
   (:require [bucket :as bucket]
-            [bucket.logging :as logging]
+            [bucket.log :as log]
             [bucket.wraps.redirect-stdout :as wrap]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
@@ -59,7 +59,7 @@
   test-fn-with-own-logs
   [{:keys [logs]}]
   (println "Captured output")
-  (let [logs-with-entry (logging/log (or logs []) "Function's own log" :level :warning)]
+  (let [logs-with-entry (log/log (or logs []) "Function's own log" :level :warning)]
     (bucket/grab :mixed-logs-result :logs logs-with-entry)))
 
 (defn stack-inner []

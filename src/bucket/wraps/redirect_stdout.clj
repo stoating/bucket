@@ -1,6 +1,6 @@
 (ns bucket.wraps.redirect-stdout
   (:require [bin.defaults :as defaults]
-            [bucket.logging :as logging]
+            [bucket.log :as log]
             [clojure.math :as math]
             [clojure.string :as str]))
 
@@ -203,7 +203,7 @@
                                         (inc relative-indent)
                                         relative-indent)
                       final-indent (+ base-indent (* indent-step adjusted-indent))]
-                  (logging/log logs text :indent final-indent)))
+                  (log/log logs text :indent final-indent)))
               initial-logs
               lines))))
 
@@ -247,7 +247,7 @@
                           (contains? last-initial :indent-next) (:indent-next last-initial)
                           :else (:indent last-initial))
             output-logs (reduce (fn [logs line]
-                                  (logging/log logs line :indent base-indent))
+                                  (log/log logs line :indent base-indent))
                                 initial-logs
                                 non-empty-lines)
             final-logs (if (identical? result-logs initial-logs)
