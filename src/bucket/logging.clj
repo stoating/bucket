@@ -343,81 +343,61 @@
              logs)))
 
 (defn debug
-  "Add a debug log entry.
+  "Add a debug log entry to a vector or bucket sink.
 
    Args:
-   - logs: existing log vector
+   - sink: log vector or Bucket map
    - message: log message string
-   - :indent (optional): indentation level
-
-   Examples:
-     (debug logs \"Debug message\")
-     (debug logs \"Debug message\" :indent 2)"
-  [logs message & {:keys [indent]}]
+   - :indent (optional): indentation level"
+  [sink message & {:keys [indent]}]
   (if indent
-    (log logs message :level :debug :indent indent)
-    (log logs message :level :debug)))
+    (log sink message :level :debug :indent indent)
+    (log sink message :level :debug)))
 
 (defn info
-  "Add an info log entry.
+  "Add an info log entry to a vector or bucket sink.
 
    Args:
-   - logs: existing log vector
+   - sink: log vector or Bucket map
    - message: log message string
-   - :indent (optional): indentation level
-
-   Examples:
-     (info logs \"Info message\")
-     (info logs \"Info message\" :indent 2)"
-  [logs message & {:keys [indent]}]
+   - :indent (optional): indentation level"
+  [sink message & {:keys [indent]}]
   (if indent
-    (log logs message :level :info :indent indent)
-    (log logs message :level :info)))
+    (log sink message :level :info :indent indent)
+    (log sink message :level :info)))
 
 (defn warning
-  "Add a warning log entry.
+  "Add a warning log entry to a vector or bucket sink.
 
    Args:
-   - logs: existing log vector
+   - sink: log vector or Bucket map
    - message: log message string
-   - :indent (optional): indentation level
-
-   Examples:
-     (warning logs \"Warning message\")
-     (warning logs \"Warning message\" :indent 2)"
-  [logs message & {:keys [indent]}]
+   - :indent (optional): indentation level"
+  [sink message & {:keys [indent]}]
   (if indent
-    (log logs message :level :warning :indent indent)
-    (log logs message :level :warning)))
+    (log sink message :level :warning :indent indent)
+    (log sink message :level :warning)))
 
 (defn error
-  "Add an error log entry.
+  "Add an error log entry to a vector or bucket sink.
 
    Args:
-   - logs: existing log vector
+   - sink: log vector or Bucket map
    - message: log message string
-   - :indent (optional): indentation level
-
-   Examples:
-     (error logs \"Error message\")
-     (error logs \"Error message\" :indent 2)"
-  [logs message & {:keys [indent]}]
+   - :indent (optional): indentation level"
+  [sink message & {:keys [indent]}]
   (if indent
-    (log logs message :level :error :indent indent)
-    (log logs message :level :error)))
+    (log sink message :level :error :indent indent)
+    (log sink message :level :error)))
 
 (defn critical
-  "Add a critical log entry.
+  "Add a critical log entry to a vector or bucket sink.
 
    Args:
-   - logs: existing log vector
+   - sink: log vector or Bucket map
    - message: log message string
-   - :indent (optional): indentation level
-
-   Examples:
-     (critical logs \"Critical message\")
-     (critical logs \"Critical message\" :indent 2)"
-  [logs message & {:keys [indent]}]
+   - :indent (optional): indentation level"
+  [sink message & {:keys [indent]}]
   (if indent
-    (log logs message :level :critical :indent indent)
-    (log logs message :level :critical)))
+    (log sink message :level :critical :indent indent)
+    (log sink message :level :critical)))
