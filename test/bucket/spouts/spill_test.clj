@@ -2,7 +2,7 @@
   "Tests for bucket spouts spill function."
   (:require [bucket :as bucket]
             [bucket.log :as log]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [test-helpers :as th]))

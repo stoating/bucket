@@ -1,7 +1,7 @@
 (ns bucket.spouts.drain-id-test
   "Tests for bucket spouts drain-id function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest drain-id-extracts-id-test

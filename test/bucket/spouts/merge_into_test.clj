@@ -1,7 +1,7 @@
 (ns bucket.spouts.merge-into-test
   "Tests for bucket spouts merge-into function."
   (:require [bucket :as bucket]
-            [bucket.spouts.aggregate :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest merge-into-multiple-buckets-test

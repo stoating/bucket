@@ -2,7 +2,7 @@
   "Tests for bucket spouts drain-error function."
   (:require [clojure.test :refer [deftest is testing]]
             [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]))
+            [bucket.spouts :as spouts]))
 
 (deftest drain-error-extracts-error-tuple-test
   (testing "extracts error tuple from bucket with exception"

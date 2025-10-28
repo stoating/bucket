@@ -1,7 +1,7 @@
 (ns bucket.spouts.drain-name-test
   "Tests for bucket spouts drain-name function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest drain-name-extracts-name-test

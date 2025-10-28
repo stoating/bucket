@@ -1,5 +1,5 @@
 (ns test-helpers
-  (:require [bucket.spouts.extract :as spouts]
+  (:require [bucket.spouts :as spouts]
             [clojure.java.io :as io]
             [clojure.test :refer [is]]))
 

@@ -1,6 +1,6 @@
 (ns bucket.spouts.pour-into-test
   (:require [bucket :as bucket]
-            [bucket.spouts.chain :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.string :as string]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))

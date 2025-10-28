@@ -36,7 +36,7 @@ Traditional monad libraries can be intimidating with their academic terminology.
 ;; => Bucket with error
 
 ;; Spill the bucket to get the final result
-(require '[bucket.spouts.extract :as spouts])
+(require '[bucket.spouts :as spouts])
 (spouts/spill my-bucket)
 ;; Prints logs, handles errors, returns result
 ```
@@ -174,7 +174,7 @@ Spouts are utilities for extracting data from buckets or combining them.
 Spill your bucket to get the result, print logs, and handle errors:
 
 ```clojure
-(require '[bucket.spouts.extract :as spouts])
+(require '[bucket.spouts :as spouts])
 
 ;; Basic usage - returns the result
 (spouts/spill my-bucket)
@@ -208,23 +208,23 @@ Spill your bucket to get the result, print logs, and handle errors:
 Pour one bucket into another, combining their contents:
 
 ```clojure
-(require '[bucket.spouts.chain :as chain])
+(require '[bucket.spouts :as spouts])
 
 ;; Gather results into a vector (default)
-(chain/pour-into new-bucket old-bucket)
+(spouts/pour-into new-bucket old-bucket)
 ;; => Bucket with result: [old-result new-result]
 
 ;; Different pour types
-(chain/pour-into new-bucket old-bucket :pour-type :drop-old)
+(spouts/pour-into new-bucket old-bucket :pour-type :drop-old)
 ;; => Uses new-result only
 
-(chain/pour-into new-bucket old-bucket :pour-type :drop-new)
+(spouts/pour-into new-bucket old-bucket :pour-type :drop-new)
 ;; => Uses old-result only
 
-(chain/pour-into new-bucket old-bucket :pour-type :stir-in-old->new)
+(spouts/pour-into new-bucket old-bucket :pour-type :stir-in-old->new)
 ;; => Applies old-result as function to new bucket
 
-(chain/pour-into new-bucket old-bucket :pour-type :stir-in-new->old)
+(spouts/pour-into new-bucket old-bucket :pour-type :stir-in-new->old)
 ;; => Applies new-result as function to old bucket
 ```
 
@@ -372,10 +372,11 @@ bucket/
 │   ├── bucket/
 │   │   ├── error.clj                 # Error handling utilities
 │   │   ├── logging.clj               # Logging utilities
+│   │   ├── spouts.clj                # End-user spout helpers
 │   │   ├── wrap.clj                  # Function wrapper combinators
 │   │   ├── spouts/
 │   │   │   ├── extract.clj           # spill, drain-* functions
-│   │   │   ├── chain.clj             # pour-into
+│   │   │   ├── chain.clj             # pour-into helpers
 │   │   │   ├── transform.clj         # serialize-bucket, summarize
 │   │   │   └── aggregate.clj         # collect-metrics, merge-into
 │   │   └── wraps/
@@ -406,7 +407,7 @@ bucket/
 
 ```clojure
 (require '[bucket :as b]
-         '[bucket.spouts.extract :as spouts])
+         '[bucket.spouts :as spouts])
 
 (defn fetch-user [id]
   (if (pos? id)

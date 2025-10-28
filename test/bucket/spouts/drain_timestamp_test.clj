@@ -1,7 +1,7 @@
 (ns bucket.spouts.drain-timestamp-test
   "Tests for bucket spouts drain-timestamp function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest drain-timestamp-extracts-timestamp-test

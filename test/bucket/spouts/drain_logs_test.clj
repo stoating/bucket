@@ -1,7 +1,7 @@
 (ns bucket.spouts.drain-logs-test
   "Tests for bucket spouts drain-logs function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))
 

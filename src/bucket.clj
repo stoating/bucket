@@ -18,8 +18,8 @@
    - grab       - construct a fresh Bucket with optional initial values (delegates to monad/pure)
 
    Output helpers:
-   - spill      (fb.core.bucket.spouts.extract) - prints logs, handles error, returns :result; optionally fails on nil
-   - pour-into  (fb.core.bucket.spouts.chain)   - appends logs to external log vector; optionally fails if :result is nil"
+   - spill      (fb.core.bucket.spouts) - prints logs, handles error, returns :result; optionally fails on nil
+   - pour-into  (fb.core.bucket.spouts) - appends logs to external log vector; optionally fails if :result is nil"
   (:require
    [monad :as monad]
    [schemas.bucket :as bs]))

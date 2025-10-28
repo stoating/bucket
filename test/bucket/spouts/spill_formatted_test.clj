@@ -1,7 +1,8 @@
 (ns bucket.spouts.spill-formatted-test
   "Tests for bucket spouts spill-formatted function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
+            [bucket.spouts.extract :as extract-spouts]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]
@@ -15,7 +16,7 @@
           output (StringWriter.)
           log-formatter (fn [logs] (str/join "\n" (map #(str "LOG: " (:value %)) logs)))
           error-formatter (fn [[_ msg]] (str "ERROR: " msg))
-          result (spouts/spill-formatted bucket
+          result (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter log-formatter
                                          :error-formatter error-formatter
@@ -34,7 +35,7 @@
           error-formatter (fn [[ex msg]]
                             (when (or ex msg)
                               "ERROR DETECTED"))
-          result (spouts/spill-formatted bucket
+          result (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter log-formatter
                                          :error-formatter error-formatter
@@ -55,7 +56,7 @@
                                                     "\",\"message\":\"" (:value %) "\"}")
                                               logs)))
           json-error-formatter (fn [_] "{}")
-          result (spouts/spill-formatted bucket
+          result (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter json-log-formatter
                                          :error-formatter json-error-formatter
@@ -73,7 +74,7 @@
                           (doseq [log logs]
                             (swap! output conj (str "LOGGED: " (:value log))))
                           nil)
-          result (spouts/spill-formatted bucket
+          result (extract-spouts/spill-formatted bucket
                                          :log-formatter log-formatter
                                          :require-result false)]
       (is (= "result-value" result))
@@ -87,7 +88,7 @@
           log-formatter identity
           error-formatter identity]
       (is (thrown? Exception
-                   (spouts/spill-formatted bucket
+                   (extract-spouts/spill-formatted bucket
                                            :out output
                                            :log-formatter log-formatter
                                            :error-formatter error-formatter

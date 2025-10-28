@@ -1,7 +1,6 @@
 (ns bucket-test
   (:require [bucket :as bucket]
-            [bucket.spouts.chain :as chain]
-            [bucket.spouts.extract :as extract]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [monad :as monad]
             [test-helpers :as th])
@@ -18,7 +17,7 @@
   (testing "spill prints logs to stdout and returns result"
     (let [resp (monad/pure :ok :logs (sample-logs))
           out-str (with-out-str
-                    (let [ret (extract/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root)]
+                    (let [ret (spouts/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root)]
                       (is (= :ok ret))))]
       (is (re-find #"INFO" out-str))
       (is (re-find #"WARNING" out-str)
@@ -29,7 +28,7 @@
     (let [e (ex-info "boom" {})
           resp (bucket/grab :error [e nil])
           out-str (with-out-str
-                    (let [ret (extract/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root :exit :continue :require-result false)]
+                    (let [ret (spouts/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root :exit :continue :require-result false)]
                       (is (nil? ret))))]
       (is (re-find #"error class" out-str)
           "spill prints error information and returns nil without exiting"))))
@@ -39,7 +38,7 @@
     (let [ts (Instant/now)
           old-bucket (monad/pure :res :logs [{:indent 0 :time ts :level :info :value "child"}])
           new-bucket (monad/pure :new-value)
-          combined (chain/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket)]
       (is (= [:res :new-value] (:result combined)))
       (is (= (:id new-bucket) (:id combined)))
       (is (= [{:indent 0 :time ts :level :info :value "child"}]
@@ -52,7 +51,7 @@
           ts2 (.plusSeconds ts1 1)
           old-bucket (monad/pure :ok :logs [{:indent 0 :time ts2 :level :info :value "child"}])
           new-bucket (monad/pure :new-value :logs [{:indent 2 :time ts1 :level :info :value "base"}])
-          combined (chain/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket)]
       (is (= [:ok :new-value] (:result combined)))
       (is (= 2 (count (:logs combined))))
       (is (= "base" (:value (first (:logs combined)))))
@@ -64,7 +63,7 @@
     (let [ts (Instant/now)
           old-bucket (monad/pure :res :logs [{:indent 0 :time ts :level :info :value "child"}] :meta {:old :data})
           new-bucket (monad/pure :new-value :meta {:new :data})
-          combined (chain/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket)]
       (is (= {:old :data :new :data}
              (:meta combined))
           "pour-into merges metadata by default")))
@@ -75,7 +74,7 @@
           old-bucket (monad/pure :ok :logs [{:indent 0 :time ts2 :level :info :value "child"}] :meta {:source :db :version 1})
           new-bucket (monad/pure :new-value :logs [{:indent 2 :time ts1 :level :info :value "base"}] :meta {:destination :api})
           old-id (:id old-bucket)
-          combined (chain/pour-into new-bucket old-bucket :meta-merge-type :snapshot)]
+          combined (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot)]
       (is (= {:destination :api
               :previous-buckets [{old-id {:source :db :version 1}}]}
              (:meta combined))

@@ -1,7 +1,7 @@
 (ns bucket.spouts.drain-meta-test
   "Tests for bucket spouts drain-meta function."
   (:require [bucket :as bucket]
-            [bucket.spouts.extract :as spouts]
+            [bucket.spouts :as spouts]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest drain-meta-extracts-meta-test
