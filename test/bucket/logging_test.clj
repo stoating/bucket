@@ -279,52 +279,70 @@
       (is (= "message2" (:value (second indented-logs)))
           "with-indent adds specified indent to all logs while preserving messages"))))
 
-(deftest filter-by-level-test
-  (testing "filtering logs by minimum level"
-    (let [logs [(log/make-entry "debug msg" :level :debug)
-                (log/make-entry "info msg" :level :info)
-                (log/make-entry "warning msg" :level :warning)
-                (log/make-entry "error msg" :level :error)
-                (log/make-entry "critical msg" :level :critical)]]
-      (testing "filter by debug (should include all)"
-        (let [filtered (log/filter-by-level logs :debug)]
-          (is (= 5 (count filtered))
-              "debug level includes all logs")))
+(deftest filter-test
+  (let [base-time (Instant/parse "2024-01-01T00:00:00Z")
+        logs [(-> (log/make-entry "debug msg" :level :debug :indent 1)
+                  (assoc :time (inst-ms base-time)))
+              (-> (log/make-entry "info msg" :level :info :indent 3)
+                  (assoc :time (inst-ms (.plusSeconds base-time 60))))
+              (-> (log/make-entry "warning msg" :level :warning :indent 5)
+                  (assoc :time (inst-ms (.plusSeconds base-time 120))))
+              (-> (log/make-entry "error msg" :level :error :indent 2)
+                  (assoc :time (inst-ms (.plusSeconds base-time 180))))
+              (-> (log/make-entry "critical error" :level :critical :indent 6)
+                  (assoc :time (inst-ms (.plusSeconds base-time 240))))]
+        bucket (assoc (bucket/grab :value {:status :ok}) :logs logs)]
+    (testing "default debug-only filtering"
+      (let [filtered (log/filter logs)]
+        (is (= 1 (count filtered)))
+        (is (= :debug (:level (first filtered))))
+        (is (= "debug msg" (:value (first filtered))))))
 
-      (testing "filter by info (should exclude debug)"
-        (let [filtered (log/filter-by-level logs :info)]
-          (is (= 4 (count filtered)))
-          (is (every? #(not= :debug (:level %)) filtered)
-              "info level excludes debug logs")))
+    (testing "level filtering with :gte"
+      (let [filtered (log/filter logs :type :gte :value :warning)]
+        (is (= 3 (count filtered)))
+        (is (= [:warning :error :critical] (map :level filtered)))))
 
-      (testing "filter by warning"
-        (let [filtered (log/filter-by-level logs :warning)]
-          (is (= 3 (count filtered)))
-          (is (every? #(contains? #{:warning :error :critical} (:level %)) filtered)
-              "warning level includes warning, error, and critical")))
+    (testing "level filtering with :eq"
+      (let [filtered (log/filter logs :type :eq :value :info)]
+        (is (= 1 (count filtered)))
+        (is (= :info (:level (first filtered))))))
 
-      (testing "filter by error"
-        (let [filtered (log/filter-by-level logs :error)]
-          (is (= 2 (count filtered)))
-          (is (every? #(contains? #{:error :critical} (:level %)) filtered)
-              "error level includes error and critical")))
-
-      (testing "filter by critical"
-        (let [filtered (log/filter-by-level logs :critical)]
-          (is (= 1 (count filtered)))
-          (is (every? #(= :critical (:level %)) filtered)
-              "critical level includes only critical logs")))))
-
-    (testing "filtering logs when provided a bucket sink"
-      (let [bucket (bucket/grab :value {:status :ok})
-            bucket-with-logs (-> bucket
-                                 (log/debug "debug msg")
-                                 (log/info "info msg")
-                                 (log/error "error msg"))
-            filtered (log/filter-by-level bucket-with-logs :info)]
+    (testing "indent filtering"
+      (let [filtered (log/filter logs :mode :indent :type :gte :value 4)]
         (is (= 2 (count filtered)))
-        (is (every? #(contains? #{:info :error} (:level %)) filtered))
-            "filter-by-level returns vector of bucket logs at or above requested level")))
+        (is (= [:warning :critical] (map :level filtered))))
+      (let [filtered (log/filter logs :mode :indent :type :lte :value 2)]
+        (is (= 2 (count filtered)))
+        (is (= [:debug :error] (map :level filtered)))))
+
+    (testing "time filtering with millis value"
+      (let [cutoff-ms (inst-ms (.plusSeconds base-time 120))
+            filtered (log/filter logs :mode :time :type :gte :value cutoff-ms)]
+        (is (= 3 (count filtered)))
+        (is (= [:warning :error :critical] (map :level filtered)))))
+
+    (testing "time filtering with Instant value"
+      (let [cutoff-instant (.plusSeconds base-time 120)
+            filtered (log/filter logs :mode :time :type :gte :value cutoff-instant)]
+        (is (= 3 (count filtered)))
+        (is (= [:warning :error :critical] (map :level filtered)))))
+
+    (testing "value filtering with regex"
+      (let [filtered (log/filter logs :mode :value :type :eq :value #"(?i:error)")]
+        (is (= 2 (count filtered)))
+        (is (= [:error :critical] (map :level filtered))))
+      (let [filtered (log/filter logs :mode :value :type :neq :value #"(?i:error)")]
+        (is (= 3 (count filtered)))
+        (is (= [:debug :info :warning] (map :level filtered)))))
+
+    (testing "bucket sink returns bucket"
+      (let [filtered-bucket (log/filter bucket :type :gte :value :info)
+            filtered-logs (:logs filtered-bucket)]
+        (is (map? filtered-bucket))
+        (is (= {:status :ok} (:result filtered-bucket))
+            "filtering preserves non-log bucket data")
+        (is (= [:info :warning :error :critical] (map :level filtered-logs)))))))
 
 (deftest convenience-functions-test
   (testing "debug function"
@@ -387,11 +405,11 @@
                   (log/make-entry "general info" :level :info)
                   (log/make-entry "warning" :level :warning)
                   (log/make-entry "error occurred" :level :error)]
-            info-and-above (log/filter-by-level logs :info)
-            warning-and-above (log/filter-by-level logs :warning)]
+            info-and-above (log/filter logs :type :gte :value :info)
+            warning-and-above (log/filter logs :type :gte :value :warning)]
         (is (= 3 (count info-and-above)))
         (is (= 2 (count warning-and-above))
-            "filter-by-level enables different verbosity levels")))
+            "filter enables different verbosity levels")))
 
     (testing "password redaction in CLI logging"
       (let [logs (-> []

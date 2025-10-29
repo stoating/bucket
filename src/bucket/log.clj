@@ -6,6 +6,7 @@
    - :time: java.time.Instant timestamp
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
+  (:refer-clojure :exclude [filter])
   (:require [bin.format :as format]
             [clojure.string :as str]
             [clojure.pprint :as pp]
@@ -306,23 +307,104 @@
           (update log-entry :indent + additional-indent))
         logs))
 
-(defn filter-by-level
-  "Filter log entries by minimum level.
+(defn- ->millis
+  "Normalize an instant or millisecond timestamp into a long value."
+  [t]
+  (cond
+    (instance? Instant t) (inst-ms t)
+    (number? t) (long t)
+    :else nil))
+
+(def ^:private level-order
+  {:debug 0 :info 1 :warning 2 :error 3 :critical 4})
+
+(defn- filter-level
+  [logs type value]
+  (let [target (level-order value 0)]
+    (filterv (fn [{:keys [level]}]
+               (let [lvl (level-order level 0)]
+                 (case type
+                   :lte (<= lvl target)
+                   :gte (>= lvl target)
+                   :eq (= lvl target)
+                   false)))
+             logs)))
+
+(defn- filter-indent
+  [logs type value]
+  (let [target (if (number? value) value 0)]
+    (filterv (fn [{:keys [indent]}]
+               (let [indent (or indent 0)]
+                 (case type
+                   :lte (<= indent target)
+                   :gte (>= indent target)
+                   :eq (= indent target)
+                   false)))
+             logs)))
+
+(defn- filter-time
+  [logs type value]
+  (let [comparison-ms (or (->millis value)
+                          (inst-ms (Instant/now)))]
+    (filterv (fn [{:keys [time]}]
+               (let [entry-ms (->millis time)]
+                 (when entry-ms
+                   (case type
+                     :lte (<= entry-ms comparison-ms)
+                     :gte (>= entry-ms comparison-ms)
+                     :eq (= entry-ms comparison-ms)
+                     false))))
+             logs)))
+
+(defn- filter-value
+  [logs type value]
+  (let [pattern (if (instance? java.util.regex.Pattern value)
+                  value
+                  (re-pattern (str value)))]
+    (filterv (fn [{:keys [value]}]
+               (let [matches? (some? (and value (re-find pattern value)))]
+                 (case type
+                   :eq matches?
+                   :neq (not matches?)
+                   false)))
+             logs)))
+
+(defn filter
+  "Filter log entries according to the requested mode.
 
    Accepts either a log vector or a Bucket (or anything satisfying `LogSink`).
 
-   Args:
-   - sink: log vector or Bucket map
-   - min-level: minimum level keyword to include
+   Keyword arguments:
+   - :mode  - filtering mode (:level, :indent, :time, :value). Defaults to :level.
+   - :type  - comparison operator. Supported per mode:
+       :level/:indent -> :lte, :gte, :eq (default :lte)
+       :time          -> :lte, :gte, :eq (default :lte)
+       :value         -> :eq, :neq (default :eq)
+   - :value - comparison target. Supported per mode:
+       :level  -> log level keyword (default :debug)
+       :indent -> integer indent (default 4)
+       :time   -> Instant or millisecond timestamp (default current millis)
+       :value  -> regex (default #\"(?i:error)\")
 
-   Returns: filtered vector of log entries"
-  [sink min-level]
-  (let [logs (-current-logs sink)
-        level-order {:debug 0 :info 1 :warning 2 :error 3 :critical 4}
-        min-val (level-order min-level 0)]
-    (filterv (fn [{:keys [level]}]
-               (>= (level-order level 0) min-val))
-             logs)))
+   Returns: sink with filtered logs (vector in, vector out; bucket in, bucket out)."
+  [sink & {:keys [mode type value]}]
+  (let [mode (or mode :level)
+        defaults (case mode
+                   :level {:type :lte :value :debug}
+                   :indent {:type :lte :value 4}
+                   :time {:type :lte :value (inst-ms (Instant/now))}
+                   :value {:type :eq :value #"(?i:error)"}
+                   {:type :lte :value :debug})
+        type (or type (:type defaults))
+        value (or value (:value defaults))
+        logs (-current-logs sink)
+        filtered (case mode
+                   :level (filter-level logs type value)
+                   :indent (filter-indent logs type value)
+                   :time (filter-time logs type value)
+                   :value (filter-value logs type value)
+                   logs)]
+    (-with-logs sink filtered)))
 
 (defn log
   "Add a log entry to a destination.
