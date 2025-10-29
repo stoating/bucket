@@ -1,4 +1,4 @@
-(ns bucket.spouts.extract
+(ns bucket.spouts.helpers.extract
   "Utilities for extracting data from buckets and emitting their contents.")
 
 (defn apply-formatter

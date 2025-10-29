@@ -36,13 +36,13 @@
    short-circuiting on error.
 
    Args:
-   - resp: Bucket map
+   - bucket: Bucket map
    - f: function (value -> Bucket)
 
    Returns: Bucket"
   {:malli/schema [:=> [:cat bs/Bucket bs/BucketFunction] bs/Bucket]}
-  [resp f]
-  (monad/bind resp f))
+  [bucket f]
+  (monad/bind bucket f))
 
 (defn stir-in
   "Stir a function into the bucket contents (alias of monad/fmap).
@@ -57,12 +57,12 @@
 
    Args:
    - f: (value -> new-value)
-   - resp: Bucket map
+   - bucket: Bucket map
 
    Returns: Bucket with transformed :result"
   {:malli/schema [:=> [:cat bs/PureFunction bs/Bucket] bs/Bucket]}
-  [f resp]
-  (monad/fmap f resp))
+  [f bucket]
+  (monad/fmap f bucket))
 
 (defn consolidate
   "Flatten a nested Bucket one level (alias of monad/join).
@@ -76,12 +76,12 @@
    levels, and returns a single-level Bucket. Short-circuits on outer error.
 
    Args:
-   - resp: Bucket map, possibly nested in :result
+   - bucket: Bucket map, possibly nested in :result
 
    Returns: flattened Bucket"
   {:malli/schema [:=> [:cat bs/Bucket] bs/Bucket]}
-  [resp]
-  (monad/join resp))
+  [bucket]
+  (monad/join bucket))
 
 (defn bucketize
   "Lift a plain function to operate on Buckets (alias of monad/lift).
@@ -133,12 +133,12 @@
    Alias of monad/sequence-m. Accumulates logs and short-circuits on the first error.
 
    Args:
-   - responses: sequence of Bucket values
+   - buckets: sequence of Bucket values
 
    Returns: Bucket with :result vector of results or the first error encountered"
   {:malli/schema [:=> [:cat bs/BucketSequence] bs/Bucket]}
-  [responses]
-  (monad/sequence-m responses))
+  [buckets]
+  (monad/sequence-m buckets))
 
 (defn gather-with
   "Map a monadic function over a sequence and gather results (alias of monad/map-m).

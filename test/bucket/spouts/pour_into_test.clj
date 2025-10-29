@@ -26,7 +26,7 @@
   (testing "drop-old uses only new bucket's result"
     (let [old-bucket (bucket/grab :old-value)
           new-bucket (bucket/grab :new-value)
-          result (spouts/pour-into new-bucket old-bucket :pour-type :drop-old)]
+          result (spouts/pour-into new-bucket old-bucket :pour-type :drop)]
       (is (= :new-value (:result result))
           "drop-old should use new bucket's result only"))))
 
@@ -34,7 +34,7 @@
   (testing "drop-new uses only old bucket's result"
     (let [old-bucket (bucket/grab :old-value)
           new-bucket (bucket/grab :new-value)
-          result (spouts/pour-into new-bucket old-bucket :pour-type :drop-new)]
+          result (spouts/pour-into old-bucket new-bucket :pour-type :drop)]
       (is (= :old-value (:result result))
           "drop-new should use old bucket's result only"))))
 
@@ -42,14 +42,14 @@
   (testing "stir-in-old->new applies old result as function to new bucket"
     (let [old-bucket (bucket/grab inc) ; old result is a function
           new-bucket (bucket/grab 42) ; new result is a value
-          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in-old->new)]
+          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in)]
       (is (= 43 (:result result))
           "should apply old function (inc) to new bucket's value (42)")))
 
   (testing "stir-in-old->new with more complex function"
     (let [old-bucket (bucket/grab (fn [x] (* x 2)))
           new-bucket (bucket/grab 10)
-          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in-old->new)]
+          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in)]
       (is (= 20 (:result result))
           "should apply old function to new value"))))
 
@@ -57,14 +57,14 @@
   (testing "stir-in-new->old applies new result as function to old bucket"
     (let [old-bucket (bucket/grab 42) ; old result is a value
           new-bucket (bucket/grab inc) ; new result is a function
-          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in-new->old)]
+          result (spouts/pour-into old-bucket new-bucket :pour-type :stir-in)]
       (is (= 43 (:result result))
           "should apply new function (inc) to old bucket's value (42)")))
 
   (testing "stir-in-new->old with string manipulation"
     (let [old-bucket (bucket/grab "hello")
           new-bucket (bucket/grab clojure.string/upper-case)
-          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in-new->old)]
+          result (spouts/pour-into old-bucket new-bucket :pour-type :stir-in)]
       (is (= "HELLO" (:result result))
           "should apply new function to old value"))))
 
@@ -81,16 +81,16 @@
 
 (deftest pour-into-name-from-new-bucket
   (testing "name comes from new bucket by default"
-    (let [old-bucket (bucket/grab :old   :name "old-bucket")
-          new-bucket (bucket/grab :new   :name "new-bucket")
+    (let [old-bucket (bucket/grab :old :name "old-bucket")
+          new-bucket (bucket/grab :new :name "new-bucket")
           result (spouts/pour-into new-bucket old-bucket)]
       (is (= "new-bucket" (:name result))
           "name should come from new bucket"))))
 
 (deftest pour-into-custom-name
   (testing "name can be overridden with :new-name option"
-    (let [old-bucket (bucket/grab :old   :name "old-bucket")
-          new-bucket (bucket/grab :new   :name "new-bucket")
+    (let [old-bucket (bucket/grab :old :name "old-bucket")
+          new-bucket (bucket/grab :new :name "new-bucket")
           result (spouts/pour-into new-bucket old-bucket :new-name "custom-bucket")]
       (is (= "custom-bucket" (:name result))
           "name should be the custom name provided"))))

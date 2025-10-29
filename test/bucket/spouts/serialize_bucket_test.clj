@@ -1,7 +1,7 @@
 (ns bucket.spouts.serialize-bucket-test
   "Tests for bucket spouts serialize-bucket function."
   (:require [bucket :as bucket]
-            [bucket.spouts.transform :as spouts]
+            [bucket.spouts.reserve :as spouts]
             [bucket.log :as log]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.java.io :as io]

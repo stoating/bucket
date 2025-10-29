@@ -1,7 +1,7 @@
 (ns bucket.spouts.summarize-test
   "Tests for bucket spouts summarize function."
   (:require [bucket :as bucket]
-            [bucket.spouts.transform :as spouts]
+            [bucket.spouts.reserve :as spouts]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))
 
