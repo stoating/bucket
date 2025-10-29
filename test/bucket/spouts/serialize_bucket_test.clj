@@ -2,7 +2,7 @@
   "Tests for bucket spouts serialize-bucket function."
   (:require [bucket :as bucket]
             [bucket.spouts.reserve :as spouts]
-            [bucket.log :as log]
+            [bucket.log.temp :as log]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.java.io :as io]
             [clojure.edn :as edn]

@@ -1,7 +1,7 @@
 (ns bucket.spouts.spill-test
   "Tests for bucket spouts spill function."
   (:require [bucket :as bucket]
-            [bucket.log :as log]
+            [bucket.log.temp :as log]
             [bucket.spouts :as spouts]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing use-fixtures]]

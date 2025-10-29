@@ -1,6 +1,6 @@
 (ns bucket.logging.make-entry-keywordized-test
   "Tests for logging make-entry function with keyword arguments."
-  (:require [bucket.log :as log]
+  (:require [bucket.log.temp :as log]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest make-entry-keyword-value-only-test

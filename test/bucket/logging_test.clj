@@ -1,6 +1,7 @@
 (ns bucket.logging-test
   (:require [bucket :as bucket]
             [bucket.log :as log]
+            [bucket.log.temp :as log-temp]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest testing is are use-fixtures]]
@@ -12,7 +13,7 @@
 (deftest make-entry-test
   (testing "make-entry with different arities"
     (testing "single argument"
-      (let [entry (log/make-entry "test message")]
+      (let [entry (log-temp/make-entry "test message")]
         (is (= "test message" (:value entry)))
         (is (= :info (:level entry)))
         (is (= 0 (:indent entry)))
@@ -20,7 +21,7 @@
             "make-entry creates entry with message, default :info level, 0 indent, and timestamp")))
 
     (testing "message and level"
-      (let [entry (log/make-entry "test message" :level :error)]
+      (let [entry (log-temp/make-entry "test message" :level :error)]
         (is (= "test message" (:value entry)))
         (is (= :error (:level entry)))
         (is (= 0 (:indent entry)))
@@ -28,7 +29,7 @@
             "make-entry creates entry with message, specified level, 0 indent, and timestamp")))
 
     (testing "message, level, and indent"
-      (let [entry (log/make-entry "test message" :level :warning :indent 3)]
+      (let [entry (log-temp/make-entry "test message" :level :warning :indent 3)]
         (is (= "test message" (:value entry)))
         (is (= :warning (:level entry)))
         (is (= 3 (:indent entry)))
@@ -37,7 +38,7 @@
 
 (deftest likely-password?-test
   (testing "exact matches"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       "confidential" true
       "Confidential" true
       "CONFIDENTIAL" true
@@ -47,7 +48,7 @@
       "confidence" false)) ; should not match as substring
 
   (testing "contains patterns"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       ;; api
       "apikey" true
       "my_api_endpoint" true
@@ -115,7 +116,7 @@
       "TOKEN_VALUE" true))
 
   (testing "word boundary patterns - only match as complete words"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       ;; pin
       "pin_code" true
       "spinning" false
@@ -140,7 +141,7 @@
       "design" false)) ; 'sig' not at word boundary ; 'sig' not at word boundary (also caught by contains)
 
   (testing "compound patterns"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       ;; api.*key patterns
       "apikey" true
       "api_key" true
@@ -165,7 +166,7 @@
       "key = val" true))
 
   (testing "URL with credentials"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       "https://user:password@example.com" true
       "http://admin:secret@localhost:8080" true
       "https://user:pass123@api.example.com/path" true
@@ -174,7 +175,7 @@
       "user@example.com" false))
 
   (testing "safe strings that should not be detected"
-    (are [input expected] (= expected (log/likely-password? input))
+    (are [input expected] (= expected (log-temp/likely-password? input))
       "regular message" false
       "user@example.com" false
       "this is just text" false
@@ -249,7 +250,7 @@
   (testing "log message formatting"
     (let [test-time (Instant/parse "2023-12-01T10:30:45Z")
           entry {:indent 2 :time test-time :level :info :value "test message"}
-          formatted (log/format-log-message entry)]
+          formatted (log-temp/format-log-message entry)]
       (is (str/includes? formatted "INFO"))
       (is (str/includes? formatted "test message"))
       (is (str/includes? formatted "  "))
@@ -258,38 +259,39 @@
 
 (deftest print-logs-test
   (testing "printing logs to output stream"
-    (let [logs [(log/make-entry "first message")
-                (log/make-entry "second message" :level :error :indent 1)]
+    (let [logs [(log-temp/make-entry "first message")
+                (log-temp/make-entry "second message" :level :error :indent 1)]
           result (with-out-str
                    (log/print-logs logs :out :stdout))]
       (is (str/includes? result "first message"))
       (is (str/includes? result "second message"))
       (is (str/includes? result "INFO"))
       (is (str/includes? result "ERROR")
-          "print-logs outputs all log entries with their levels to stdout"))))
+          "print-logs outputs all log entries with their levels to stdout")))
 
-(deftest with-indent-test
-  (testing "adding indentation to logs"
-    (let [logs [(log/make-entry "message1" :indent 1)
-                (log/make-entry "message2" :level :error :indent 2)]
-          indented-logs (log/with-indent logs 3)]
-      (is (= 4 (:indent (first indented-logs))))
-      (is (= 5 (:indent (second indented-logs))))
-      (is (= "message1" (:value (first indented-logs))))
-      (is (= "message2" (:value (second indented-logs)))
-          "with-indent adds specified indent to all logs while preserving messages"))))
+  (testing "printing logs from a bucket sink"
+    (let [bucket (-> (bucket/grab :value {:status :ok})
+                     (log/log "bucket message" :level :warning)
+                     (log/log "second message"))
+          result (with-out-str
+                   (log/print-logs bucket :out :stdout))]
+      (is (str/includes? result "bucket message"))
+      (is (str/includes? result "second message"))
+      (is (str/includes? result "WARNING"))
+      (is (str/includes? result "INFO")
+          "print-logs accepts a bucket sink and prints its logs with levels"))))
 
 (deftest filter-test
   (let [base-time (Instant/parse "2024-01-01T00:00:00Z")
-        logs [(-> (log/make-entry "debug msg" :level :debug :indent 1)
+        logs [(-> (log-temp/make-entry "debug msg" :level :debug :indent 1)
                   (assoc :time (inst-ms base-time)))
-              (-> (log/make-entry "info msg" :level :info :indent 3)
+              (-> (log-temp/make-entry "info msg" :level :info :indent 3)
                   (assoc :time (inst-ms (.plusSeconds base-time 60))))
-              (-> (log/make-entry "warning msg" :level :warning :indent 5)
+              (-> (log-temp/make-entry "warning msg" :level :warning :indent 5)
                   (assoc :time (inst-ms (.plusSeconds base-time 120))))
-              (-> (log/make-entry "error msg" :level :error :indent 2)
+              (-> (log-temp/make-entry "error msg" :level :error :indent 2)
                   (assoc :time (inst-ms (.plusSeconds base-time 180))))
-              (-> (log/make-entry "critical error" :level :critical :indent 6)
+              (-> (log-temp/make-entry "critical error" :level :critical :indent 6)
                   (assoc :time (inst-ms (.plusSeconds base-time 240))))]
         bucket (assoc (bucket/grab :value {:status :ok}) :logs logs)]
     (testing "default debug-only filtering"
@@ -401,10 +403,10 @@
             "logs accumulate across operations with correct levels and indents")))
 
     (testing "log filtering for different verbosity levels"
-      (let [logs [(log/make-entry "debug info" :level :debug)
-                  (log/make-entry "general info" :level :info)
-                  (log/make-entry "warning" :level :warning)
-                  (log/make-entry "error occurred" :level :error)]
+      (let [logs [(log-temp/make-entry "debug info" :level :debug)
+                  (log-temp/make-entry "general info" :level :info)
+                  (log-temp/make-entry "warning" :level :warning)
+                  (log-temp/make-entry "error occurred" :level :error)]
             info-and-above (log/filter logs :type :gte :value :info)
             warning-and-above (log/filter logs :type :gte :value :warning)]
         (is (= 3 (count info-and-above)))
@@ -422,7 +424,7 @@
 
 (deftest log-output-format-test
   (testing "CLI-compatible log output format"
-    (let [entry (log/make-entry "CLI operation completed")
+    (let [entry (log-temp/make-entry "CLI operation completed")
           printed-output (with-out-str
                            (log/print-logs [entry] :out :stdout))]
       (is (str/includes? printed-output "INFO"))
@@ -432,8 +434,8 @@
 
 (deftest log-file-output-test
   (testing "print-logs writes to file with :out :file"
-    (let [logs [(log/make-entry "First log message")
-                (log/make-entry "Second log message" :level :error :indent 1)]
+    (let [logs [(log-temp/make-entry "First log message")
+                (log-temp/make-entry "Second log message" :level :error :indent 1)]
           test-dir (str th/test-temp-root "/logs")]
       (log/print-logs logs :out :file :dir test-dir :timestamp false :name "test")
       (let [file (io/file (str test-dir "/test.log"))
@@ -446,7 +448,7 @@
             "print-logs writes all log entries with levels to file"))))
 
   (testing "print-logs writes to file with timestamp"
-    (let [logs [(log/make-entry "Timestamped log")]
+    (let [logs [(log-temp/make-entry "Timestamped log")]
           test-dir (str th/test-temp-root "/logs")]
       (log/print-logs logs :out :file :dir test-dir :timestamp true)
       (let [files (.listFiles (io/file test-dir))]
@@ -455,7 +457,7 @@
             "print-logs creates timestamped log files"))))
 
   (testing "print-logs with :out :both writes to file and stdout"
-    (let [logs [(log/make-entry "Both output log" :level :warning)]
+    (let [logs [(log-temp/make-entry "Both output log" :level :warning)]
           test-dir (str th/test-temp-root "/logs")
           stdout-output (with-out-str
                           (log/print-logs logs :out :both :dir test-dir :timestamp false :name "both-test"))]

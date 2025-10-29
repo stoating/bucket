@@ -1,7 +1,6 @@
 (ns bucket.spouts.spill-formatted-test
   "Tests for bucket spouts spill-formatted function."
   (:require [bucket :as bucket]
-            [bucket.spouts :as spouts]
             [bucket.spouts.helpers.extract :as extract-spouts]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
