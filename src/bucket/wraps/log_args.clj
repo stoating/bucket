@@ -25,10 +25,10 @@
                                       :else (:indent last-entry))
                         args-text (str "args: " (pr-str (dissoc opts :logs)))
                         args-logs (log/log logs
-                                               args-text
-                                               :indent base-indent
-                                               :check-pass check-pass
-                                               :indent-next base-indent)
+                                           args-text
+                                           :indent base-indent
+                                           :check-pass check-pass
+                                           :indent-next base-indent)
                         response (f (assoc opts :logs args-logs))]
                     (if (and (map? response)
                              (nil? (:logs response)))

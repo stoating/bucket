@@ -6,7 +6,7 @@
    - :time: java.time.Instant timestamp
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
-  (:require [bin.format :as fmt]
+  (:require [bin.format :as format]
             [clojure.string :as str]
             [clojure.pprint :as pp]
             [clojure.java.io :as io])
@@ -71,11 +71,6 @@
            (:compound-patterns sensitive-patterns))
      (boolean (re-find (:url-with-credentials sensitive-patterns) input)))))
 
-(defprotocol LogSink
-  "Protocol for things that can accumulate log entries."
-  (-current-logs [sink] "Return the current log vector for the sink.")
-  (-with-logs [sink logs] "Return the sink updated with the provided logs vector."))
-
 (defn- ensure-log-vector
   "Normalize a log collection into a vector."
   [logs]
@@ -84,6 +79,11 @@
     (nil? logs) []
     (sequential? logs) (vec logs)
     :else []))
+
+(defprotocol LogSink
+  "Protocol for things that can accumulate log entries."
+  (-current-logs [sink] "Return the current log vector for the sink.")
+  (-with-logs [sink logs] "Return the sink updated with the provided logs vector."))
 
 (extend-protocol LogSink
   clojure.lang.IPersistentVector
@@ -98,54 +98,33 @@
   (-current-logs [_] [])
   (-with-logs [_ logs] logs))
 
-(defn log
-  "Add a log entry to a destination.
+(defn- ->log-opts
+  "Convert mixed positional/keyword arguments into a unified options map."
+  [a b rest]
+  (if (odd? (+ 2 (count rest)))
+    (apply hash-map :value a b rest)
+    (apply hash-map a b rest)))
 
-   The destination is always the first positional argument and can be either:
-   - a log vector
-   - a Bucket map (or any map with a :logs vector)
-
-   The message can be either positional (second arg) or keywordized (:value).
-   Any additional parameters must use keywords.
-
-   Args:
-   - sink: log vector or Bucket map (first, positional)
-   - message: log message string (positional or :value keyword)
-   - :level - log level keyword (default :info)
-   - :indent - indentation level (default: same as last entry or 0)
-   - :check-pass - whether to check for password-like content (default false)
-
-   Examples:
-     (log logs \"Hello\")                                    ; positional message only
-     (log logs \"Hello\" :level :warning)                    ; positional message + keyword args
-     (log logs \"Hello\" :level :error :indent 2)            ; positional message + multiple keywords
-     (log logs :value \"Hello\")                             ; all keyword args
-     (log logs :value \"Hello\" :level :warning :indent 2)   ; all keyword args
-     (log logs :value \"password123\" :check-pass true)      ; with password check
-
-   Returns: updated destination (vector or Bucket) with new log entry appended"
-  ([sink message]
-   (log sink :value message))
-  ([sink a b & rest]
-   (let [args (if (odd? (+ 2 (count rest)))
-                (apply hash-map :value a b rest)
-                (apply hash-map a b rest))
-         {:keys [value level indent check-pass indent-next]} args
-         logs (-current-logs sink)
-         last-entry (peek logs)
-         fallback-indent (cond
-                           (nil? last-entry) 0
-                           (contains? last-entry :indent-next) (:indent-next last-entry)
-                           :else (:indent last-entry))
-         actual-indent (or indent fallback-indent)
-         actual-message (if (and check-pass (likely-password? value))
-                          "* log redacted *"
-                          value)
-         base-entry (make-entry :value actual-message :level (or level :info) :indent actual-indent)
-         entry (cond-> base-entry
-                 (some? indent-next) (assoc :indent-next indent-next))
-         updated-logs (conj logs entry)]
-     (-with-logs sink updated-logs))))
+(defn- append-log-entry
+  "Internal shared implementation for appending a log entry to a sink."
+  [sink {:keys [value level indent check-pass indent-next]}]
+  (let [logs (-current-logs sink)
+        last-entry (peek logs)
+        fallback-indent (cond
+                          (nil? last-entry) 0
+                          (contains? last-entry :indent-next) (:indent-next last-entry)
+                          :else (:indent last-entry))
+        actual-indent (or indent fallback-indent)
+        actual-message (if (and check-pass (likely-password? value))
+                         "* log redacted *"
+                         value)
+        base-entry (make-entry :value actual-message
+                               :level (or level :info)
+                               :indent actual-indent)
+        entry (cond-> base-entry
+                (some? indent-next) (assoc :indent-next indent-next))
+        updated-logs (conj logs entry)]
+    (-with-logs sink updated-logs)))
 
 (defn format-log-message
   "Format a log entry for output.
@@ -158,7 +137,7 @@
   (let [instant (if (instance? Long time)
                   (Instant/ofEpochMilli time)
                   time)
-        timestamp (.format fmt/text-date-formatter instant)
+        timestamp (.format format/text-date instant)
         log-level (str/upper-case (name level))
         spaces (str/join (repeat indent " "))]
     (format "%s - %-8s:%s%s" timestamp log-level spaces value)))
@@ -187,7 +166,7 @@
            :or {dir "logs" timestamp true}}]
   (let [dir-file (io/file dir)]
     (.mkdirs dir-file))
-  (let [ts (when timestamp (fmt/filename-timestamp))
+  (let [ts (when timestamp (format/filename-timestamp))
         filename (cond
                    (and ts name) (str ts "-" name ".log")
                    ts (str ts ".log")
@@ -249,7 +228,7 @@
 
    Returns: filename string with .edn extension"
   [name timestamp]
-  (let [ts (when timestamp (fmt/filename-timestamp))]
+  (let [ts (when timestamp (format/filename-timestamp))]
     (cond
       (and ts name) (str ts "-" name ".edn")
       ts (str ts ".edn")
@@ -330,74 +309,110 @@
 (defn filter-by-level
   "Filter log entries by minimum level.
 
+   Accepts either a log vector or a Bucket (or anything satisfying `LogSink`).
+
    Args:
-   - logs: vector of log entries
-   - min-level: minimum level to include
+   - sink: log vector or Bucket map
+   - min-level: minimum level keyword to include
 
    Returns: filtered vector of log entries"
-  [logs min-level]
-  (let [level-order {:debug 0 :info 1 :warning 2 :error 3 :critical 4}
+  [sink min-level]
+  (let [logs (-current-logs sink)
+        level-order {:debug 0 :info 1 :warning 2 :error 3 :critical 4}
         min-val (level-order min-level 0)]
     (filterv (fn [{:keys [level]}]
                (>= (level-order level 0) min-val))
              logs)))
 
+(defn log
+  "Add a log entry to a destination.
+
+   The destination is always the first positional argument and can be either:
+   - a log vector
+   - a Bucket map (or any map with a :logs vector)
+
+   The message can be either positional (second arg) or keywordized (:value).
+   Any additional parameters must use keywords.
+
+   Args:
+   - sink: log vector or Bucket map (first, positional)
+   - message: log message string (positional or :value keyword)
+   - :level - log level keyword (default :info)
+   - :indent - indentation level (default: same as last entry or 0)
+   - :check-pass - whether to check for password-like content (default false)
+
+   Examples:
+     (log logs \"Hello\")                                    ; positional message only
+     (log logs \"Hello\" :level :warning)                    ; positional message + keyword args
+     (log logs \"Hello\" :level :error :indent 2)            ; positional message + multiple keywords
+     (log logs :value \"Hello\")                             ; all keyword args
+     (log logs :value \"Hello\" :level :warning :indent 2)   ; all keyword args
+     (log logs :value \"password123\" :check-pass true)      ; with password check
+
+   Returns: updated destination (vector or Bucket) with new log entry appended"
+  ([sink message]
+   (append-log-entry sink {:value message}))
+  ([sink a b & rest]
+   (let [opts (->log-opts a b rest)]
+     (append-log-entry sink opts))))
+
+(defn- log-with-level
+  "Internal helper used by level-specific logging functions.
+
+   Mirrors the `log` calling conventions while forcing the :level key."
+  ([level sink message]
+   (append-log-entry sink {:value message :level level}))
+  ([level sink a b & rest]
+   (let [opts (->log-opts a b rest)
+         opts-with-level (assoc opts :level level)]
+     (append-log-entry sink opts-with-level))))
+
 (defn debug
   "Add a debug log entry to a vector or bucket sink.
 
-   Args:
-   - sink: log vector or Bucket map
-   - message: log message string
-   - :indent (optional): indentation level"
-  [sink message & {:keys [indent]}]
-  (if indent
-    (log sink message :level :debug :indent indent)
-    (log sink message :level :debug)))
+   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   and :indent-next."
+  ([sink message]
+   (log-with-level :debug sink message))
+  ([sink a b & rest]
+   (apply log-with-level :debug sink a b rest)))
 
 (defn info
   "Add an info log entry to a vector or bucket sink.
 
-   Args:
-   - sink: log vector or Bucket map
-   - message: log message string
-   - :indent (optional): indentation level"
-  [sink message & {:keys [indent]}]
-  (if indent
-    (log sink message :level :info :indent indent)
-    (log sink message :level :info)))
+   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   and :indent-next."
+  ([sink message]
+   (log-with-level :info sink message))
+  ([sink a b & rest]
+   (apply log-with-level :info sink a b rest)))
 
 (defn warning
   "Add a warning log entry to a vector or bucket sink.
 
-   Args:
-   - sink: log vector or Bucket map
-   - message: log message string
-   - :indent (optional): indentation level"
-  [sink message & {:keys [indent]}]
-  (if indent
-    (log sink message :level :warning :indent indent)
-    (log sink message :level :warning)))
+   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   and :indent-next."
+  ([sink message]
+   (log-with-level :warning sink message))
+  ([sink a b & rest]
+   (apply log-with-level :warning sink a b rest)))
 
 (defn error
   "Add an error log entry to a vector or bucket sink.
 
-   Args:
-   - sink: log vector or Bucket map
-   - message: log message string
-   - :indent (optional): indentation level"
-  [sink message & {:keys [indent]}]
-  (if indent
-    (log sink message :level :error :indent indent)
-    (log sink message :level :error)))
+   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   and :indent-next."
+  ([sink message]
+   (log-with-level :error sink message))
+  ([sink a b & rest]
+   (apply log-with-level :error sink a b rest)))
 
 (defn critical
   "Add a critical log entry to a vector or bucket sink.
 
-   Args:
-   - sink: log vector or Bucket map
-   - message: log message string
-   - :indent (optional): indentation level"
-  [sink message & {:keys [indent]}]
-  (if indent
-    (log sink message :level :critical :indent indent)
-    (log sink message :level :critical)))
+   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   and :indent-next."
+  ([sink message]
+   (log-with-level :critical sink message))
+  ([sink a b & rest]
+   (apply log-with-level :critical sink a b rest)))

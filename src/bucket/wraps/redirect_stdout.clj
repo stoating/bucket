@@ -291,7 +291,7 @@
 
    Mode-specific behavior:
    - :basic        captures lines verbatim using the caller's base indentation
-   - :depth-aware  measures stack depth so nested calls are indented automatically
+   - :depth-aware  attempts to measure stack depth so nested calls are indented automatically
 
    Args:
    - f: function to wrap (takes map with :logs, returns map with :logs)

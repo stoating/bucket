@@ -1,4 +1,5 @@
 (ns bucket.spouts.reserve
+  "End-user facing spouts that complement `bucket.spouts` but are typically needed less often."
   (:require [bucket.spouts.helpers.transform :as transform]))
 
 (defn serialize-bucket
@@ -37,7 +38,6 @@
      :name name
      :meta meta
      :log-count (count logs)
-     :has-error (boolean (or exception message))
      :error-type (cond
                    exception :exception
                    message :message
@@ -50,8 +50,7 @@
                     (map? result) :map
                     (vector? result) :vector
                     (seq? result) :seq
-                    :else :unknown)
-     :result-nil? (nil? result)}))
+                    :else :unknown)}))
 
 (defn collect-metrics
   "Extract timing and performance metrics from bucket logs."

@@ -313,7 +313,18 @@
         (let [filtered (log/filter-by-level logs :critical)]
           (is (= 1 (count filtered)))
           (is (every? #(= :critical (:level %)) filtered)
-              "critical level includes only critical logs"))))))
+              "critical level includes only critical logs")))))
+
+    (testing "filtering logs when provided a bucket sink"
+      (let [bucket (bucket/grab :value {:status :ok})
+            bucket-with-logs (-> bucket
+                                 (log/debug "debug msg")
+                                 (log/info "info msg")
+                                 (log/error "error msg"))
+            filtered (log/filter-by-level bucket-with-logs :info)]
+        (is (= 2 (count filtered)))
+        (is (every? #(contains? #{:info :error} (:level %)) filtered))
+            "filter-by-level returns vector of bucket logs at or above requested level")))
 
 (deftest convenience-functions-test
   (testing "debug function"

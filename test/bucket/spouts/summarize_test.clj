@@ -15,10 +15,8 @@
               :name (:name bucket)
               :meta (:meta bucket)
               :log-count 2
-              :has-error false
               :error-type nil
-              :result-type :map
-              :result-nil? false}
+              :result-type :map}
              summary)
           "summarize extracts log count, error status, and result type for successful bucket"))))
 
@@ -31,10 +29,8 @@
               :name (:name bucket)
               :meta (:meta bucket)
               :log-count 0
-              :has-error true
               :error-type :exception
-              :result-type :nil
-              :result-nil? true}
+              :result-type :nil}
              summary)
           "summarize identifies exception errors and nil results"))))
 
@@ -46,10 +42,8 @@
               :name (:name bucket)
               :meta (:meta bucket)
               :log-count 0
-              :has-error true
               :error-type :message
-              :result-type :nil
-              :result-nil? true}
+              :result-type :nil}
              summary)
           "summarize identifies message-only errors"))))
 
