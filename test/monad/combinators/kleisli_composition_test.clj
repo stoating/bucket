@@ -12,7 +12,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result 16
+              :value 16
               :error [nil nil]
               :logs []}
              r)
@@ -23,8 +23,8 @@
           h (monad/>> f monad/pure)
           r1 (f 10)
           r2 (h 10)]
-      (is (= (select-keys r1 [:result :error :logs :meta])
-             (select-keys r2 [:result :error :logs :meta]))
+      (is (= (select-keys r1 [:value :error :logs :meta])
+             (select-keys r2 [:value :error :logs :meta]))
           ">> f pure behaves the same as f alone"))))
 
 (deftest kleisli-errors
@@ -36,7 +36,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["bad"]
               :logs []}
              r)

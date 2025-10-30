@@ -5,32 +5,32 @@
   (:import [java.time Instant]))
 
 (deftest consolidate-flattens-nested-bucket
-  (testing "consolidate extracts inner bucket result"
+  (testing "consolidate extracts inner bucket value"
     (let [bucket-one (bucket/grab 42)
           bucket-two (bucket/grab bucket-one)
           consolidated (bucket/consolidate bucket-two)]
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              bucket-one))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result bucket-one
+              :value bucket-one
               :error [nil nil]
               :logs []}
              bucket-two))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              consolidated)
-          "consolidate flattens nested bucket to extract inner result"))))
+          "consolidate flattens nested bucket to extract inner value"))))
 
 (deftest consolidate-merges-logs
   (testing "consolidate merges outer and inner logs"
@@ -42,21 +42,21 @@
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [inner]}
              bucket-one))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result bucket-one
+              :value bucket-one
               :error [nil nil]
               :logs [outer]}
              bucket-two))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [outer inner]}
              consolidated)
@@ -71,7 +71,7 @@
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [ex "ctx"]
               :logs []}
              consolidated)

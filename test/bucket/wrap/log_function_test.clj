@@ -22,7 +22,7 @@
           f (wrap/log-function demo-fn)
           resp (f {:logs [l0]})
           [lpre lenter lexit] (:logs resp)]
-      (is (= :ok (:result resp)))
+      (is (= :ok (:value resp)))
       (is (= l0 lpre))
       (is (= "--> demo" (:value lenter)))
       (is (= "<-- demo" (:value lexit)))
@@ -37,7 +37,7 @@
           f (wrap/log-function task-fn)
           resp (f {:logs [l0]})
           [_ lenter lexit] (:logs resp)]
-      (is (= :done (:result resp)))
+      (is (= :done (:value resp)))
       (is (= 10 (:indent lenter)))
       (is (= 10 (:indent lexit)))
       (is (= 6 (:indent-next lexit))
@@ -48,7 +48,7 @@
     (let [f (wrap/log-function demo-fn)
           resp (f {})
           [lenter lexit] (:logs resp)]
-      (is (= :ok (:result resp)))
+      (is (= :ok (:value resp)))
       (is (= 4 (:indent lenter)))
       (is (= 4 (:indent lexit)))
       (is (= 0 (:indent-next lexit))
@@ -59,7 +59,7 @@
     (let [f (wrap/log-function demo-fn :spacing 2)
           resp (f {})
           [lenter lexit] (:logs resp)]
-      (is (= :ok (:result resp)))
+      (is (= :ok (:value resp)))
       (is (= 2 (:indent lenter)))
       (is (= "<-- demo" (:value lexit)))
       (is (= 2 (:indent lexit)))

@@ -16,7 +16,7 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 5
+              :value 5
               :error [nil nil]
               :logs []}
              monad-one))
@@ -24,11 +24,11 @@
       (is (= {:id (:id left)
               :name (str (:id left) "-bucket")
               :meta {}
-              :result 45
+              :value 45
               :error [nil nil]
               :logs []}
              left)
-          "associativity law: order of bind operations doesn't affect result")))
+          "associativity law: order of bind operations doesn't affect value")))
 
   (testing "associativity with logs and errors"
     (let [l {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "step"}
@@ -40,7 +40,7 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result "ok"
+              :value "ok"
               :error [nil nil]
               :logs []}
              monad-one))
@@ -48,7 +48,7 @@
       (is (= {:id (:id left)
               :name (str (:id left) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["boom"]
               :logs [l]}
              left)

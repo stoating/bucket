@@ -243,7 +243,7 @@
               updated-bucket (log/log initial-bucket "bucket message" :level :warning)
               logs (:logs updated-bucket)]
           (is (map? updated-bucket))
-          (is (= {:status :ok} (:result updated-bucket)))
+          (is (= {:status :ok} (:value updated-bucket)))
           (is (= 1 (count logs)))
           (is (= :warning (:level (first logs))))
           (is (= "bucket message" (:value (first logs)))
@@ -345,7 +345,7 @@
       (let [filtered-bucket (log/filter bucket :type :gte :value :info)
             filtered-logs (:logs filtered-bucket)]
         (is (map? filtered-bucket))
-        (is (= {:status :ok} (:result filtered-bucket))
+        (is (= {:status :ok} (:value filtered-bucket))
             "filtering preserves non-log bucket data")
         (is (= [:info :warning :error :critical] (map :level filtered-logs)))))))
 

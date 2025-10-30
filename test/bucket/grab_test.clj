@@ -11,7 +11,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              grabbed-bucket))))
@@ -21,7 +21,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result "hello world"
+              :value "hello world"
               :error [nil nil]
               :logs []}
              grabbed-bucket))))
@@ -32,7 +32,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result {:user-id 123
+              :value {:user-id 123
                        :name "Alice"
                        :roles [:admin :user]}
               :error [nil nil]
@@ -45,11 +45,11 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result add-one
+              :value add-one
               :error [nil nil]
               :logs []}
              grabbed-bucket))
-      (is (fn? (:result grabbed-bucket))))))
+      (is (fn? (:value grabbed-bucket))))))
 
 (deftest grab-with-logs-test
   (testing "single log entry"
@@ -58,7 +58,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result "user-token-xyz"
+              :value "user-token-xyz"
               :error [nil nil]
               :logs [log]}
              grabbed-bucket))))
@@ -70,7 +70,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result {:status "ok"}
+              :value {:status "ok"}
               :error [nil nil]
               :logs logs}
              grabbed-bucket))))
@@ -80,18 +80,18 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result "data"
+              :value "data"
               :error [nil nil]
               :logs []}
              grabbed-bucket)))))
 
 (deftest grab-preserves-nil-values-test
-  (testing "nil as result"
+  (testing "nil as value"
     (let [grabbed-bucket (bucket/grab nil)]
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [nil nil]
               :logs []}
              grabbed-bucket))))
@@ -102,7 +102,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [nil nil]
               :logs [log]}
              grabbed-bucket)))))
@@ -113,7 +113,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [nil nil]
               :logs []}
              grabbed-bucket)))))
@@ -128,7 +128,7 @@
       (is (= {:id (:id grabbed-bucket)
               :name (str (:id grabbed-bucket) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [ex "ctx"]
               :logs log}
              grabbed-bucket)))))

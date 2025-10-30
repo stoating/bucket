@@ -1,4 +1,4 @@
-(ns bucket.spouts.drain-result-test
+(ns bucket.spouts.drain-value-test
   "Tests for bucket spouts drain-result function."
   (:require [bucket :as bucket]
             [bucket.spouts :as spouts]
@@ -8,24 +8,24 @@
   (testing "extracts complex result from bucket"
     (let [result {:user-id 123 :name "Alice" :roles [:admin :user]}
           bucket (bucket/grab result)]
-      (is (= result (spouts/drain-result bucket))
+      (is (= result (spouts/drain-value bucket))
           "drain-result extracts complex result from bucket"))))
 
 (deftest drain-result-nil-result-test
   (testing "handles nil result"
     (let [bucket (bucket/grab nil)]
-      (is (nil? (spouts/drain-result bucket))
+      (is (nil? (spouts/drain-value bucket))
           "drain-result returns nil when bucket result is nil"))))
 
 (deftest drain-result-string-result-test
   (testing "extracts string result"
     (let [bucket (bucket/grab "hello world")]
-      (is (= "hello world" (spouts/drain-result bucket))
+      (is (= "hello world" (spouts/drain-value bucket))
           "drain-result extracts string result from bucket"))))
 
 (deftest drain-result-from-error-bucket-test
   (testing "extracts result from error bucket"
     (let [ex (ex-info "Error occurred" {})
           bucket (bucket/grab "partial-result" :error [ex "context"])]
-      (is (= "partial-result" (spouts/drain-result bucket))
+      (is (= "partial-result" (spouts/drain-value bucket))
           "drain-result extracts partial result from error bucket"))))

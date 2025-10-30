@@ -13,17 +13,17 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 21
+              :value 21
               :error [nil nil]
               :logs []}
              monad-one))
       (is (not= (:id left) (:id right)))
-      (is (= (select-keys right [:result :error :logs :meta])
-             (select-keys left [:result :error :logs :meta])))
+      (is (= (select-keys right [:value :error :logs :meta])
+             (select-keys left [:value :error :logs :meta])))
       (is (= {:id (:id left)
               :name (str (:id left) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              left)
@@ -40,24 +40,24 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result "x"
+              :value "x"
               :error [nil nil]
               :logs []}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result :x
+              :value :x
               :error [nil nil]
               :logs []}
              monad-two))
       (is (= {:id (:id r-ok)
               :name (str (:id r-ok) "-bucket")
               :meta {}
-              :result "x!"
+              :value "x!"
               :error [nil nil]
               :logs [l]}
              r-ok))
-      (is (= (select-keys (f-bad :x) [:result :error :logs :meta])
-             (select-keys r-bad [:result :error :logs :meta]))
+      (is (= (select-keys (f-bad :x) [:value :error :logs :meta])
+             (select-keys r-bad [:value :error :logs :meta]))
           "left identity holds for both success and error cases"))))

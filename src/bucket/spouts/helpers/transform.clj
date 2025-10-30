@@ -7,7 +7,7 @@
 (defn prepare-bucket-for-json
   "Prepare bucket for JSON serialization by converting non-JSON-safe values."
   [bucket]
-  (let [{:keys [id name error logs result meta]} bucket
+  (let [{:keys [id name error logs value meta]} bucket
         [exception stacktrace] error]
     {:id (str id)
      :name name
@@ -23,7 +23,7 @@
                                         (str %)
                                         %)))
                  logs)
-     :result result
+     :value value
      :meta meta}))
 
 (defn prepare-bucket-for-edn

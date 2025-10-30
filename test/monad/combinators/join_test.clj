@@ -12,17 +12,17 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result {:id (:id monad-one)
+              :value {:id (:id monad-one)
                        :name (str (:id monad-one) "-bucket")
                        :meta {}
-                       :result 42
+                       :value 42
                        :error [nil nil]
                        :logs []}
               :error [nil nil]
@@ -31,11 +31,11 @@
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              res)
-          "join extracts inner result from nested monad")))
+          "join extracts inner value from nested monad")))
 
   (testing "logs merged outer then inner"
     (let [l1 {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "outer"}
@@ -46,17 +46,17 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [l2]}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result {:id (:id monad-one)
+              :value {:id (:id monad-one)
                        :name (str (:id monad-one) "-bucket")
                        :meta {}
-                       :result :ok
+                       :value :ok
                        :error [nil nil]
                        :logs [l2]}
               :error [nil nil]
@@ -65,7 +65,7 @@
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [l1 l2]}
              res)
@@ -85,7 +85,7 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["bad"]
               :logs [l]}
              res)

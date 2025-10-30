@@ -9,15 +9,15 @@
     (let [logs1 [{:indent 0 :time 1000 :level :info :value "Bucket1 log1"}
                  {:indent 1 :time 1001 :level :debug :value "Bucket1 log2"}]
           logs2 [{:indent 0 :time 2000 :level :info :value "Bucket2 log1"}]
-          bucket1 (bucket/grab "result1" :logs logs1)
-          bucket2 (bucket/grab "result2" :logs logs2)
+          bucket1 (bucket/grab "value1" :logs logs1)
+          bucket2 (bucket/grab "value2" :logs logs2)
           logs-ref (atom [])
-          results (spouts/merge-into [bucket1 bucket2] logs-ref)]
-      (is (= ["result1" "result2"] results))
+          merged-bucket (spouts/merge-into [bucket1 bucket2] logs-ref)]
+      (is (= ["value1" "value2"] merged-bucket))
       (is (= 3 (count @logs-ref)))
       (is (= "Bucket1 log1" (:value (first @logs-ref))))
       (is (= "Bucket2 log1" (:value (last @logs-ref)))
-          "merge-into appends logs from multiple buckets into shared atom and returns results"))))
+          "merge-into appends logs from multiple buckets into shared atom and returns merged-bucket"))))
 
 (deftest merge-into-with-base-indent-test
   (testing "adjusts indentation with base indent"

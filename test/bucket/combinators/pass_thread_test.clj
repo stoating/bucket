@@ -16,7 +16,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result 16
+              :value 16
               :error [nil nil]
               :logs []}
              result)
@@ -36,7 +36,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result 9
+              :value 9
               :error [nil nil]
               :logs [l1 l2]}
              result)
@@ -53,7 +53,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["fail"]
               :logs []}
              result)
@@ -66,7 +66,7 @@
           pipeline (bucket/pass-> add5-with-meta mul2-with-meta)
           result (pipeline 3)]
       (is (= 16
-             (:result result)))
+             (:value result)))
       (is (= {:step :add :value 5}
              (:meta result))
           "pass-> preserves metadata from first function, ignoring subsequent functions' metadata")))
@@ -79,7 +79,7 @@
           pipeline (bucket/pass-> step1 step2)
           result (pipeline 2)]
       (is (= 9
-             (:result result)))
+             (:value result)))
       (is (= [l1 l2]
              (:logs result))
           "logs are accumulated")

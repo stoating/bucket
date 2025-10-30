@@ -22,13 +22,13 @@
 
 (deftest drain-id-nil-id-test
   (testing "handles bucket with nil id"
-    (let [bucket {:result "data" :error [nil nil] :id nil :name "test" :meta {}}]
+    (let [bucket {:value "data" :error [nil nil] :id nil :name "test" :meta {}}]
       (is (nil? (spouts/drain-id bucket))
           "drain-id returns nil when bucket id is nil"))))
 
 (deftest drain-id-custom-id-test
   (testing "extracts custom id from bucket"
     (let [custom-id "custom-bucket-id-123"
-          bucket {:result "data" :error [nil nil] :id custom-id :name "test" :meta {}}]
+          bucket {:value "data" :error [nil nil] :id custom-id :name "test" :meta {}}]
       (is (= custom-id (spouts/drain-id bucket))
           "drain-id extracts custom id from bucket"))))

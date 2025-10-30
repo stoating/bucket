@@ -11,14 +11,14 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 10
+              :value 10
               :error [nil nil]
               :logs []}
              monad-one))
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 20
+              :value 20
               :error [nil nil]
               :logs []}
              result)
@@ -31,14 +31,14 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result "abc"
+              :value "abc"
               :error [nil nil]
               :logs [l]}
              monad-one))
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 3
+              :value 3
               :error [nil nil]
               :logs [l]}
              result)

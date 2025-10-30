@@ -21,13 +21,13 @@
 
 (deftest drain-name-nil-name-test
   (testing "handles bucket with nil name"
-    (let [bucket {:result "data" :error [nil nil] :id "test-id" :name nil :meta {}}]
+    (let [bucket {:value "data" :error [nil nil] :id "test-id" :name nil :meta {}}]
       (is (nil? (spouts/drain-name bucket))
           "drain-name returns nil when bucket name is nil"))))
 
 (deftest drain-name-custom-name-test
   (testing "extracts custom name from bucket"
     (let [custom-name "my-special-bucket"
-          bucket {:result "data" :error [nil nil] :id "test-id" :name custom-name :meta {}}]
+          bucket {:value "data" :error [nil nil] :id "test-id" :name custom-name :meta {}}]
       (is (= custom-name (spouts/drain-name bucket))
           "drain-name extracts custom name from bucket"))))

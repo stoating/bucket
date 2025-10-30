@@ -8,7 +8,7 @@
 (defn bucket-view
   "Select the core fields we care about when asserting bucket structure."
   [bucket]
-  (select-keys bucket [:id :name :meta :result :logs :error]))
+  (select-keys bucket [:id :name :meta :value :logs :error]))
 
 ;; Test functions that use various output methods
 
@@ -123,7 +123,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :println-result
+                    :value :println-result
                     :error [nil nil]
                     :logs [(assoc log1 :value "Line 1 from println" :level :info)
                            (assoc log2 :value "Line 2 from println" :level :info)]}]
@@ -137,7 +137,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :pr-result
+                    :value :pr-result
                     :error [nil nil]
                     :logs [(assoc log :level :info)]}]
       (is (= expected (bucket-view resp)))
@@ -151,7 +151,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :print-result
+                    :value :print-result
                     :error [nil nil]
                     :logs [(assoc log :value "First part second part third part"
                                    :level :info)]}]
@@ -170,7 +170,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :mixed-result
+                    :value :mixed-result
                     :error [nil nil]
                     :logs adjusted-logs}]
       (is (= expected resp)))))
@@ -183,7 +183,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :printf-result
+                    :value :printf-result
                     :error [nil nil]
                     :logs [(assoc log :value "Formatted: 42 items, 98.50% complete"
                                    :level :info)]}]
@@ -196,7 +196,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :silent-result
+                    :value :silent-result
                     :error [nil nil]
                     :logs []}]
       (is (= expected (bucket-view resp))))))
@@ -213,7 +213,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :println-result
+                    :value :println-result
                     :error [nil nil]
                     :logs [log1
                            (assoc log2 :value "Line 1 from println" :level :info)
@@ -228,7 +228,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :mixed-logs-result
+                    :value :mixed-logs-result
                     :error [nil nil]
                     :logs [(assoc log1 :value "Captured output" :level :info)
                            (assoc log2 :value "Function's own log" :level :warning)]}]
@@ -246,7 +246,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :println-result
+                    :value :println-result
                     :error [nil nil]
                     :logs [log1
                            (assoc log2 :value "Line 1 from println" :level :info :indent 4)
@@ -267,7 +267,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :filtered-result
+                    :value :filtered-result
                     :error [nil nil]
                     :logs [(assoc log1 :value "Line 1" :level :info)
                            (assoc log2 :value "Line 2" :level :info)]}]
@@ -285,7 +285,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :no-redaction
+                    :value :no-redaction
                     :error [nil nil]
                     :logs [(assoc log1 :value "password=secret123" :level :info)
                            (assoc log2 :value "api_key=abc123" :level :info)]}]
@@ -295,7 +295,7 @@
 (deftest redirect-stdout-preserves-metadata
   (testing "preserves function metadata"
     (let [original-fn (fn [{:keys [logs]}]
-                        (bucket/grab :result :logs (or logs [])))
+                        (bucket/grab :value :logs (or logs [])))
           meta-fn (with-meta original-fn {:name "test-function" :doc "Test doc"})
           wrapped (wrap/redirect-stdout meta-fn)]
       (is (= {:name "test-function" :doc "Test doc"} (meta wrapped)))
@@ -308,7 +308,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result :println-result
+                    :value :println-result
                     :logs (:logs resp)
                     :error [nil nil]}]
       (is (= expected (bucket-view resp))))))
@@ -339,7 +339,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 10
+                    :value 10
                     :error [nil nil]
                     :logs [(assoc log :value "Simple processing: 5" :level :info)]}]
       (is (= expected (bucket-view resp))))))
@@ -353,7 +353,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 13
+                    :value 13
                     :error [nil nil]
                     :logs [(assoc log :level :info)]}]
       (is (= expected (bucket-view resp)))
@@ -368,7 +368,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result "Result: test"
+                    :value "Result: test"
                     :error [nil nil]
                     :logs [(assoc log1 :value "Start" :level :info :indent 0)
                            (assoc log2 :level :info)
@@ -389,7 +389,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 10
+                    :value 10
                     :error [nil nil]
                     :logs [log1
                            (assoc log2 :value "Simple processing: 5" :level :info)]}]
@@ -408,7 +408,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 10
+                    :value 10
                     :error [nil nil]
                     :logs [log1
                            (assoc log2 :value "Simple processing: 5" :level :info :indent 2)]}]
@@ -423,7 +423,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 12
+                    :value 12
                     :error [nil nil]
                     :logs []}]
       (is (= expected (bucket-view resp))))))
@@ -437,7 +437,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 11
+                    :value 11
                     :error [nil nil]
                     :logs [(assoc log :value "Simple processing: 5" :level :info)]}]
       (is (= expected (bucket-view resp))))))
@@ -459,7 +459,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 30
+                    :value 30
                     :error [nil nil]
                     :logs [(assoc log1 :value "Computing sum of 10 and 20" :level :info)
                            (assoc log2 :level :info)
@@ -482,7 +482,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result 6
+                    :value 6
                     :error [nil nil]
                     :logs [(assoc log1 :value "Values: 1 2 3" :level :info)
                            (assoc log2 :level :info)]}]
@@ -516,7 +516,7 @@
       (is (= {:id (:id input-bucket)
               :name (str (:id input-bucket) "-bucket")
               :meta {}
-              :result 50
+              :value 50
               :error [nil nil]
               :logs [{:indent 0
                       :time (:time (nth (:logs result-bucket) 0))
@@ -554,7 +554,7 @@
           expected {:id (:id resp)
                     :name (:name resp)
                     :meta (:meta resp)
-                    :result (:result resp)
+                    :value (:value resp)
                     :error [nil nil]
                     :logs [(assoc log1 :indent 0)
                            (assoc log2 :indent 6)

@@ -7,7 +7,7 @@
 (deftest drain-meta-extracts-meta-test
   (testing "extracts metadata from bucket"
     (let [meta-data {:user "alice" :timestamp 1234567890}
-          bucket {:result "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta meta-data}]
+          bucket {:value "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta meta-data}]
       (is (= meta-data (spouts/drain-meta bucket))
           "drain-meta extracts metadata from bucket"))))
 
@@ -19,7 +19,7 @@
 
 (deftest drain-meta-nil-meta-test
   (testing "handles bucket with nil metadata"
-    (let [bucket {:result "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta nil}]
+    (let [bucket {:value "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta nil}]
       (is (nil? (spouts/drain-meta bucket))
           "drain-meta returns nil when bucket metadata is nil"))))
 
@@ -29,7 +29,7 @@
                      :context {:environment "production" :region "us-east"}
                      :tags ["important" "critical"]
                      :version "1.2.3"}
-          bucket {:result "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta meta-data}]
+          bucket {:value "data" :error [nil nil] :id "test-id" :name "test-bucket" :meta meta-data}]
       (is (= meta-data (spouts/drain-meta bucket)))
       (is (= "bob" (get-in (spouts/drain-meta bucket) [:user :name])))
       (is (= "production" (get-in (spouts/drain-meta bucket) [:context :environment])))

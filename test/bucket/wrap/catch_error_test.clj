@@ -15,25 +15,25 @@
   (throw (ex-info "boom" {:k :v})))
 
 (deftest catch-error-pass-through
-  (testing "successful result unchanged"
+  (testing "successful value unchanged"
     (let [l {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "start"}
           f (wrap/catch-error test-fn-ok)
           resp (f {:logs [l]})]
       (is (= {:id (:id resp)
               :name (str (:id resp) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [l]}
              resp)
-          "catch-error passes through successful results"))))
+          "catch-error passes through successful values"))))
 
 (deftest catch-error-catches-exception
   (testing "exception caught and wrapped"
     (let [l {:indent 1 :time (Instant/parse "2024-01-15T10:30:01Z") :level :debug :value "pre"}
           f (wrap/catch-error test-fn-boom)
           resp (f {:logs [l]})]
-      (is (= nil (:result resp)))
+      (is (= nil (:value resp)))
       (is (= [l] (:logs resp)))
       (is (instance? Exception (first (:error resp))))
       (is (= "boom" (.getMessage ^Exception (first (:error resp))))
@@ -46,7 +46,7 @@
       (is (= {:id (:id resp)
               :name (str (:id resp) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs []}
              resp)

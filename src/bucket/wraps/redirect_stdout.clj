@@ -313,7 +313,7 @@
 
      (def wrapped (redirect-stdout legacy-fn))
      (wrapped {:logs []})
-     ;; => Bucket with :result 42 and :logs containing captured output
+     ;; => Bucket with :value 42 and :logs containing captured output
 
    Example - lifted function:
      (defn plain-fn [x]
@@ -325,7 +325,7 @@
                                     :mode :depth-aware
                                     :stack-exclude {:exclude [\"fb.actions.\"] :mode :append}))
      (captured (bucket/grab 5 :logs []))
-     ;; => Bucket with :result 10 and captured output in logs"
+     ;; => Bucket with :value 10 and captured output in logs"
   [f & {:keys [mode spacing stack-exclude]
         :or {mode :basic
              spacing (int (math/ceil (/ default/spacing 2.0)))

@@ -14,7 +14,7 @@
     (let [f (wrap/log-args demo-fn)
           resp (f {:foo "bar"})
           [args-log] (:logs resp)]
-      (is (= :ok (:result resp)))
+      (is (= :ok (:value resp)))
       (is (= "args: {:foo \"bar\"}" (:value args-log)))
       (is (= 0 (:indent args-log))))))
 

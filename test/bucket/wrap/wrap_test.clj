@@ -26,16 +26,16 @@
 
 (defn wrap-helper-level-2 [x]
   (println "Level 2: Starting with" x)
-  (let [result (wrap-helper-level-3 x)]
-    (println "Level 2: Got result" result)
-    (+ result 10)))
+  (let [value (wrap-helper-level-3 x)]
+    (println "Level 2: Got value" value)
+    (+ value 10)))
 
 (defn plain-nested [x]
   (println "Level 1: Begin nested processing")
   (let [intermediate (wrap-helper-level-2 x)]
-    (println "Level 1: Intermediate result is" intermediate)
+    (println "Level 1: Intermediate value is" intermediate)
     (let [final (* intermediate 2)]
-      (println "Level 1: Final result is" final)
+      (println "Level 1: Final value is" final)
       final)))
 
 (def wrap-plain-nested
@@ -73,7 +73,7 @@
       (is (= {:id (:id resp)
               :name (str (:id resp) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [l0 enter args exit]}
              resp))
@@ -91,7 +91,7 @@
           f (wrap/wrap work-boom)
           resp (f {:logs [l0]})
           [_ lenter larg lexit] (:logs resp)]
-      (is (nil? (:result resp)))
+      (is (nil? (:value resp)))
       (is (instance? Exception (first (:error resp))))
       (is (= [l0 lenter larg lexit] (:logs resp)))
       (is (= 6 (:indent lenter)))
@@ -106,7 +106,7 @@
     (let [f (wrap/wrap work-ok)
           resp (f {})
           [lenter larg lexit] (:logs resp)]
-      (is (= :ok (:result resp)))
+      (is (= :ok (:value resp)))
       (is (= 4 (:indent lenter)))
       (is (= "args: {}" (:value larg)))
       (is (= 4 (:indent larg)))
@@ -130,16 +130,16 @@
           logs (:logs resp)
           values (map :value logs)
           indents (map :indent logs)]
-      (is (= 50 (:result resp)))
+      (is (= 50 (:value resp)))
       (is (= [nil nil] (:error resp)))
       (is (= "--> wrap-plain-nested" (first values)))
       (is (str/starts-with? (second values) "args: "))
       (is (= ["Level 1: Begin nested processing"
               "Level 2: Starting with 5"
               "Level 3: Processing 5"
-              "Level 2: Got result 15"
-              "Level 1: Intermediate result is 25"
-              "Level 1: Final result is 50"]
+              "Level 2: Got value 15"
+              "Level 1: Intermediate value is 25"
+              "Level 1: Final value is 50"]
              (subvec (vec values) 2 8)))
       (is (= "<-- wrap-plain-nested" (last values)))
       (is (= [4 4 4 8 12 8 4 4 4] indents)))))
@@ -153,16 +153,16 @@
           logs (:logs resp)
           values (map :value logs)
           indents (map :indent logs)]
-      (is (= 50 (:result resp)))
+      (is (= 50 (:value resp)))
       (is (= [nil nil] (:error resp)))
       (is (= "--> wrap-plain-nested" (first values)))
       (is (str/starts-with? (second values) "args: "))
       (is (= ["Level 1: Begin nested processing"
               "Level 2: Starting with 5"
               "Level 3: Processing 5"
-              "Level 2: Got result 15"
-              "Level 1: Intermediate result is 25"
-              "Level 1: Final result is 50"]
+              "Level 2: Got value 15"
+              "Level 1: Intermediate value is 25"
+              "Level 1: Final value is 50"]
              (subvec (vec values) 2 8)))
       (is (= "<-- wrap-plain-nested" (last values)))
       (is (= [4 4 4 4 4 4 4 4 4] indents)))))
@@ -174,17 +174,17 @@
           resp (wrapped (bucket/grab 5 :logs []))
           values (map :value (:logs resp))
           indents (map :indent (:logs resp))]
-      (is (= 255 (:result resp)))
+      (is (= 255 (:value resp)))
       (is (= [nil nil] (:error resp)))
       (is (= "--> wrap-threaded-nested" (first values)))
       (is (str/starts-with? (second values) "args: "))
       (is (= ["Thread Level 1: start 5"
               "Level 2: Starting with 5"
               "Level 3: Processing 5"
-              "Level 2: Got result 15"
+              "Level 2: Got value 15"
               "Level 2: Starting with 25"
               "Level 3: Processing 25"
-              "Level 2: Got result 75"
+              "Level 2: Got value 75"
               "Thread Level 1: after helper 85"]
              (subvec (vec values) 2 10)))
       (is (= "<-- wrap-threaded-nested" (last values)))
@@ -197,7 +197,7 @@
                         (println "Level 3: processing" value)
                         (bucket/grab {:stage :inner
                                       :input value
-                                      :result (* value 3)}
+                                      :value (* value 3)}
                                      :logs (or logs [])))
                       {:name 'inner-worker})
           wrapped-inner (wrap/wrap raw-inner)
@@ -207,11 +207,11 @@
                          (println "Level 2: start" value)
                          (let [inner (wrapped-inner {:logs (or logs [])
                                                      :value (inc value)})
-                               inner-result (:result inner)]
-                           (println "Level 2: combining" (:result inner-result))
+                               inner-value (:value inner)]
+                           (println "Level 2: combining" (:value inner-value))
                            (bucket/grab {:stage :middle
                                          :input value
-                                         :inner inner-result}
+                                         :inner inner-value}
                                         :logs (:logs inner))))
                        {:name 'middle-worker})
           wrapped-middle (wrap/wrap raw-middle)
@@ -221,11 +221,11 @@
                         (println "Level 1: begin" value)
                         (let [mid (wrapped-middle {:logs (or logs [])
                                                    :value (* 2 value)})
-                              mid-result (:result mid)]
-                          (println "Level 1: finish" (:stage mid-result))
+                              mid-value (:value mid)]
+                          (println "Level 1: finish" (:stage mid-value))
                           (let [bucket (bucket/grab {:stage :outer
                                                      :input value
-                                                     :middle mid-result}
+                                                     :middle mid-value}
                                                     :logs (:logs mid))]
                             bucket)))
                       {:name 'outer-worker})
@@ -240,13 +240,13 @@
           expected {:id (:id response)
                     :name (:name response)
                     :meta {}
-                    :result {:stage :outer
+                    :value {:stage :outer
                              :input 5
                              :middle {:stage :middle
                                       :input 10
                                       :inner {:stage :inner
                                               :input 11
-                                              :result 33}}}
+                                              :value 33}}}
                     :error [nil nil]
                     :logs [{:indent 4 :time (:time outer-entry) :level :info :value "--> outer-worker" :indent-next 4}
                            {:indent 4 :time (:time outer-args) :level :info :value "args: {:value 5}" :indent-next 4}

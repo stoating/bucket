@@ -5,7 +5,7 @@
   (:import [java.time Instant]))
 
 (deftest sequence-m-success-and-logs
-  (testing "results collected in order"
+  (testing "values collected in order"
     (let [monad-one (monad/pure 1)
           monad-two (monad/pure 2)
           monad-three (monad/pure 3)
@@ -14,28 +14,28 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 1
+              :value 1
               :error [nil nil]
               :logs []}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result 2
+              :value 2
               :error [nil nil]
               :logs []}
              monad-two))
       (is (= {:id (:id monad-three)
               :name (str (:id monad-three) "-bucket")
               :meta {}
-              :result 3
+              :value 3
               :error [nil nil]
               :logs []}
              monad-three))
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result [1 2 3]
+              :value [1 2 3]
               :error [nil nil]
               :logs []}
              r)
@@ -48,7 +48,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result [:x :y]
+              :value [:x :y]
               :error [nil nil]
               :logs [l1 l2]}
              r)
@@ -61,7 +61,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["bad"]
               :logs []}
              r)

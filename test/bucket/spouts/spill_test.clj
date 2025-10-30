@@ -13,25 +13,25 @@
   (testing "spill outputs logs to stdout only"
     (let [logs [(log-entry/make "First message")
                 (log-entry/make "Second message" :level :debug :indent 4)]
-          bucket (bucket/grab "result-value" :logs logs)
+          bucket (bucket/grab "value" :logs logs)
           out-before (with-out-str
-                       (let [result (spouts/spill bucket :log-out :stdout :meta-out :none)]
-                         (is (= "result-value" result))))]
+                       (let [value (spouts/spill bucket :log-out :stdout :meta-out :none)]
+                         (is (= "value" value))))]
       (is (.contains out-before "First message"))
       (is (.contains out-before "Second message"))
       (is (.contains out-before "INFO"))
       (is (.contains out-before "DEBUG")
-          "spill with :log-out :stdout prints all logs to stdout and returns result"))))
+          "spill with :log-out :stdout prints all logs to stdout and returns value"))))
 
 (deftest spill-logs-to-file-only-test
   (testing "spill outputs logs to file only"
     (let [logs [(log-entry/make "Log to file")
                 (log-entry/make "Another log entry" :level :warning :indent 4)]
-          bucket (bucket/grab "file-result" :logs logs)
+          bucket (bucket/grab "file-value" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :file :meta-out :none :out-dir temp-dir)]
-                      (is (= "file-result" result))))]
+                    (let [value (spouts/spill bucket :log-out :file :meta-out :none :out-dir temp-dir)]
+                      (is (= "file-value" value))))]
       (is (not (.contains out-str "Log to file")))
       (let [log-files (filter #(.endsWith (.getName %) ".log")
                               (.listFiles (io/file temp-dir)))]
@@ -47,11 +47,11 @@
   (testing "spill outputs logs to both stdout and file"
     (let [logs [(log-entry/make "First log")
                 (log-entry/make "Second log" :level :debug :indent 4)]
-          bucket (bucket/grab "both-result" :logs logs)
+          bucket (bucket/grab "both-value" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :both :meta-out :none :out-dir temp-dir)]
-                      (is (= "both-result" result))))]
+                    (let [value (spouts/spill bucket :log-out :both :meta-out :none :out-dir temp-dir)]
+                      (is (= "both-value" value))))]
       (is (.contains out-str "First log"))
       (is (.contains out-str "Second log"))
       (let [log-files (filter #(.endsWith (.getName %) ".log")
@@ -70,8 +70,8 @@
           bucket (bucket/grab "data" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
-                      (is (= "data" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
+                      (is (= "data" value))))]
       (is (not (.contains out-str "Should not appear")))
       (is (zero? (count (.listFiles (io/file temp-dir))))
           "spill with :log-out :none produces no output and creates no files"))))
@@ -80,11 +80,11 @@
   (testing "spill handles error in bucket"
     (let [logs [(log-entry/make "Processing...")]
           ex (ex-info "Something went wrong" {:detail "bad data"})
-          bucket (bucket/grab "partial-result" :logs logs :error [ex "Error context"])
+          bucket (bucket/grab "partial-value" :logs logs :error [ex "Error context"])
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :stdout :meta-out :none :out-dir temp-dir :exit :continue)]
-                      (is (= "partial-result" result))))]
+                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :none :out-dir temp-dir :exit :continue)]
+                      (is (= "partial-value" value))))]
       (is (.contains out-str "Processing..."))
       (is (.contains out-str "Something went wrong"))
       (is (.contains out-str "Error context")
@@ -95,8 +95,8 @@
     (let [logs [(log-entry/make "With meta")]
           bucket (bucket/grab "value" :logs logs :meta {:user "alice" :operation "test"})
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :stdout)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                      (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":user"))
       (is (.contains out-str "alice"))
@@ -111,8 +111,8 @@
           bucket (bucket/grab "value" :logs logs :meta {:env "prod" :version "1.0"} :name "file-test-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :file :out-dir temp-dir)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :file :out-dir temp-dir)]
+                      (is (= "value" value))))]
       (is (not (.contains out-str "=== Bucket Metadata ===")))
       (is (not (.contains out-str ":env")))
       (is (.contains out-str "Metadata written to:"))
@@ -126,8 +126,8 @@
           bucket (bucket/grab "value" :logs logs :meta {:service "api" :request-id "123"} :name "both-output-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :both :out-dir temp-dir)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :both :out-dir temp-dir)]
+                      (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":service"))
       (is (.contains out-str "api"))
@@ -144,8 +144,8 @@
           bucket (bucket/grab "value" :logs logs :meta {:should-not-appear "in output"})
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
+                      (is (= "value" value))))]
       (is (not (.contains out-str "=== Bucket Metadata ===")))
       (is (not (.contains out-str "should-not-appear")))
       (is (not (.contains out-str "Metadata written to:")))
@@ -157,8 +157,8 @@
     (let [logs [(log-entry/make "Empty meta" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {})
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :stdout)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                      (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ===")
           "spill prints metadata header even when metadata is empty"))))
 
@@ -169,8 +169,8 @@
                                                         :context {:env "staging" :region "us-west"}
                                                         :tags ["critical" "monitored"]})
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :none :meta-out :stdout)]
-                      (is (= "value" result))))]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                      (is (= "value" value))))]
       (is (.contains out-str ":user"))
       (is (.contains out-str ":name"))
       (is (.contains out-str "bob"))
@@ -184,11 +184,11 @@
   (testing "spill outputs both logs and meta to stdout"
     (let [logs [(log-entry/make "Log entry 1" :info 0)
                 (log-entry/make "Log entry 2" :debug 4)]
-          bucket (bucket/grab "combined-result" :logs logs :meta {:combined "test" :count 2})
+          bucket (bucket/grab "combined-value" :logs logs :meta {:combined "test" :count 2})
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :stdout :meta-out :stdout :out-dir temp-dir)]
-                      (is (= "combined-result" result))))]
+                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :stdout :out-dir temp-dir)]
+                      (is (= "combined-value" value))))]
       (is (.contains out-str "Log entry 1"))
       (is (.contains out-str "Log entry 2"))
       (is (.contains out-str "=== Bucket Metadata ==="))
@@ -210,8 +210,8 @@
                               :name "everything-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :both :meta-out :both :out-dir temp-dir :exit :continue)]
-                      (is (= "partial-data" result))))]
+                    (let [value (spouts/spill bucket :log-out :both :meta-out :both :out-dir temp-dir :exit :continue)]
+                      (is (= "partial-data" value))))]
       (is (.contains out-str "Starting"))
       (is (.contains out-str "Processing"))
       (is (.contains out-str "Warning occurred"))
@@ -225,31 +225,31 @@
       (is (= 3 (count (.listFiles (io/file temp-dir))))
           "spill with all outputs prints logs, error, metadata to both stdout and files"))))
 
-(deftest spill-require-result-default-test
-  (testing "spill returns nil when result is nil by default"
+(deftest spill-require-value-default-test
+  (testing "spill returns nil when value is nil by default"
     (let [logs [(log-entry/make "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :stdout :meta-out :none)]
-                      (is (nil? result))))]
+                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :none)]
+                      (is (nil? value))))]
       (is (.contains out-str "Returning nil")
           "spill returns nil without throwing by default"))))
 
-(deftest spill-require-result-true-test
-  (testing "spill throws exception when result is nil and require-result is true"
+(deftest spill-require-value-true-test
+  (testing "spill throws exception when value is nil and require-value is true"
     (let [bucket (bucket/grab nil)]
-      (is (thrown-with-msg? Exception #"result is nil"
-                            (spouts/spill bucket :log-out :none :meta-out :none :require-result true))))))
+      (is (thrown-with-msg? Exception #"value is nil"
+                            (spouts/spill bucket :log-out :none :meta-out :none :require-value true))))))
 
-(deftest spill-require-result-false-test
-  (testing "spill returns nil when result is nil and require-result is false"
+(deftest spill-require-value-false-test
+  (testing "spill returns nil when value is nil and require-value is false"
     (let [logs [(log-entry/make "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
-                    (let [result (spouts/spill bucket :log-out :stdout :meta-out :none :require-result false)]
-                      (is (nil? result))))]
+                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :none :require-value false)]
+                      (is (nil? value))))]
       (is (.contains out-str "Returning nil")
-          "spill returns nil without throwing when :require-result is false"))))
+          "spill returns nil without throwing when :require-value is false"))))
 
 (deftest spill-default-outputs-both-test
   (testing "spill defaults to outputting both logs and meta to both stdout and file"

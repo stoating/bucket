@@ -9,7 +9,7 @@
     (let [logs [{:indent 0 :time 1000 :level :info :value "Start"}
                 {:indent 1 :time 1500 :level :debug :value "Processing"}
                 {:indent 0 :time 2000 :level :error :value "Failed"}]
-          bucket {:result "data" :error [nil nil] :logs logs}
+          bucket {:value "data" :error [nil nil] :logs logs}
           metrics (spouts/collect-metrics bucket)]
       (is (= {:total-logs 3
               :log-levels {:info 1 :debug 1 :error 1}
@@ -34,7 +34,7 @@
 (deftest collect-metrics-single-log-test
   (testing "handles single log entry"
     (let [logs [{:indent 0 :time 1000 :level :info :value "Only log"}]
-          bucket {:result "data" :error [nil nil] :logs logs}
+          bucket {:value "data" :error [nil nil] :logs logs}
           metrics (spouts/collect-metrics bucket)]
       (is (= {:total-logs 1
               :log-levels {:info 1}

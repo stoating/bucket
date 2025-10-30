@@ -32,7 +32,7 @@
 (defn summarize
   "Create a condensed summary of a bucket, keeping basic identifiers alongside derived stats."
   [bucket]
-  (let [{:keys [id name meta error logs result]} bucket
+  (let [{:keys [id name meta error logs value]} bucket
         [exception message] error]
     {:id id
      :name name
@@ -42,15 +42,15 @@
                    exception :exception
                    message :message
                    :else nil)
-     :result-type (cond
-                    (nil? result) :nil
-                    (string? result) :string
-                    (number? result) :number
-                    (boolean? result) :boolean
-                    (map? result) :map
-                    (vector? result) :vector
-                    (seq? result) :seq
-                    :else :unknown)}))
+     :value-type (cond
+                   (nil? value) :nil
+                   (string? value) :string
+                   (number? value) :number
+                   (boolean? value) :boolean
+                   (map? value) :map
+                   (vector? value) :vector
+                   (seq? value) :seq
+                   :else :unknown)}))
 
 (defn collect-metrics
   "Extract timing and performance metrics from bucket logs."
@@ -85,6 +85,6 @@
                            :level level
                            :value value})
                         all-logs)
-         results (mapv :result buckets)]
+         values (mapv :value buckets)]
      (swap! logs-ref into adjusted)
-     results)))
+     values)))

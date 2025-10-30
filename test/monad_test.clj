@@ -12,20 +12,20 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 42
+              :value 42
               :error [nil nil]
               :logs []}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result "hi"
+              :value "hi"
               :error [nil nil]
               :logs [log]}
              monad-two)
-          "pure creates bucket with result and optional logs")))
+          "pure creates bucket with value and optional logs")))
 
-  (testing "bind chains results and accumulates logs"
+  (testing "bind chains values and accumulates logs"
     (let [l1 {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "first"}
           l2 {:indent 1 :time (Instant/parse "2024-01-15T10:30:01Z") :level :debug :value "second"}
           monad-one (monad/pure 5 :logs [l1])
@@ -34,14 +34,14 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 5
+              :value 5
               :error [nil nil]
               :logs [l1]}
              monad-one))
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result 10
+              :value 10
               :error [nil nil]
               :logs [l1 l2]}
              res)
@@ -60,11 +60,11 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result 6
+              :value 6
               :error [nil nil]
               :logs [l]}
              res)
-          "fmap applies function to result while preserving logs")))
+          "fmap applies function to value while preserving logs")))
 
   (testing "lift composes like fmap"
     (let [inc* (monad/lift inc)
@@ -74,12 +74,12 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result "10"
+              :value "10"
               :error [nil nil]
               :logs []}
              res))
-      (is (= (select-keys res [:result :error :logs :meta])
-             (select-keys alt [:result :error :logs :meta]))
+      (is (= (select-keys res [:value :error :logs :meta])
+             (select-keys alt [:value :error :logs :meta]))
           "lift creates composable monadic functions equivalent to fmap")))
 
   (testing "fmap/lift short-circuit on error"
@@ -100,27 +100,27 @@
       (is (= {:id (:id monad-one)
               :name (str (:id monad-one) "-bucket")
               :meta {}
-              :result 7
+              :value 7
               :error [nil nil]
               :logs [l2]}
              monad-one))
       (is (= {:id (:id monad-two)
               :name (str (:id monad-two) "-bucket")
               :meta {}
-              :result monad-one
+              :value monad-one
               :error [nil nil]
               :logs [l1]}
              monad-two))
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result 7
+              :value 7
               :error [nil nil]
               :logs [l1 l2]}
              res)
           "join flattens nested bucket and merges all logs")))
 
-  (testing "sequence-m collects results; fails fast"
+  (testing "sequence-m collects values; fails fast"
     (let [ok (monad/pure 1)
           err (bucket/grab :error ["oops"])
           r1 (monad/sequence-m [(monad/pure 1) (monad/pure 2) (monad/pure 3)])
@@ -128,18 +128,18 @@
       (is (= {:id (:id r1)
               :name (str (:id r1) "-bucket")
               :meta {}
-              :result [1 2 3]
+              :value [1 2 3]
               :error [nil nil]
               :logs []}
              r1))
       (is (= {:id (:id r2)
               :name (str (:id r2) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["oops"]
               :logs []}
              r2)
-          "sequence-m collects all results or fails fast on first error")))
+          "sequence-m collects all values or fails fast on first error")))
 
   (testing "map-m applies monadic fn"
     (let [f (fn [x] (monad/pure (* x 2)))
@@ -149,14 +149,14 @@
       (is (= {:id (:id r-ok)
               :name (str (:id r-ok) "-bucket")
               :meta {}
-              :result [2 4]
+              :value [2 4]
               :error [nil nil]
               :logs []}
              r-ok))
       (is (= {:id (:id r-err)
               :name (str (:id r-err) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["x"]
               :logs []}
              r-err)
@@ -171,7 +171,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result 12
+              :value 12
               :error [nil nil]
               :logs []}
              r)
@@ -185,7 +185,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["bad"]
               :logs []}
              r)

@@ -9,7 +9,7 @@
   (testing "extracts logs from bucket"
     (let [logs [{:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "Test log"}
                 {:indent 1 :time (Instant/parse "2024-01-15T10:30:01Z") :level :debug :value "Debug info"}]
-          bucket {:result "data" :error [nil nil] :logs logs}]
+          bucket {:value "data" :error [nil nil] :logs logs}]
       (is (= logs (spouts/drain-logs bucket))
           "drain-logs extracts logs from bucket"))))
 
@@ -21,7 +21,7 @@
 
 (deftest drain-logs-nil-logs-test
   (testing "handles nil bucket logs"
-    (let [bucket {:result "data" :error [nil nil] :logs nil}]
+    (let [bucket {:value "data" :error [nil nil] :logs nil}]
       (is (nil? (spouts/drain-logs bucket))
           "drain-logs returns nil when bucket logs is nil"))))
 

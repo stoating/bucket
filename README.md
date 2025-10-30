@@ -186,7 +186,7 @@ Spill your bucket to get the result, print logs, and handle errors:
 (spouts/spill my-bucket :log-out :none)    ; Silent
 
 ;; Require a non-nil result
-(spouts/spill my-bucket :require-result true)  ; Fails if result is nil
+(spouts/spill my-bucket :require-value true)  ; Fails if result is nil
 
 ;; Custom output directory
 (spouts/spill my-bucket :out-dir "my-logs")

@@ -11,16 +11,16 @@
   (testing "formats logs and errors with custom formatters"
     (let [logs [{:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "Test log"}]
           ex (ex-info "Test error" {})
-          bucket (bucket/grab "result" :logs logs :error [ex "context"])
+          bucket (bucket/grab "value" :logs logs :error [ex "context"])
           output (StringWriter.)
           log-formatter (fn [logs] (str/join "\n" (map #(str "LOG: " (:value %)) logs)))
           error-formatter (fn [[_ msg]] (str "ERROR: " msg))
-          result (extract-spouts/spill-formatted bucket
+          value (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter log-formatter
                                          :error-formatter error-formatter
-                                         :require-result false)]
-      (is (= "result" result))
+                                         :require-value false)]
+      (is (= "value" value))
       (is (str/includes? (str output) "LOG: Test log"))
       (is (str/includes? (str output) "ERROR: context")
           "spill-formatted uses custom formatters for logs and errors"))))
@@ -34,12 +34,12 @@
           error-formatter (fn [[ex msg]]
                             (when (or ex msg)
                               "ERROR DETECTED"))
-          result (extract-spouts/spill-formatted bucket
+          value (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter log-formatter
                                          :error-formatter error-formatter
-                                         :require-result false)]
-      (is (= "data" result))
+                                         :require-value false)]
+      (is (= "data" value))
       (is (str/includes? (str output) "CUSTOM: Test"))
       (is (not (str/includes? (str output) "ERROR DETECTED"))
           "spill-formatted calls error-formatter, but formatter returns nil when no error"))))
@@ -55,12 +55,12 @@
                                                     "\",\"message\":\"" (:value %) "\"}")
                                               logs)))
           json-error-formatter (fn [_] "{}")
-          result (extract-spouts/spill-formatted bucket
+          value (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter json-log-formatter
                                          :error-formatter json-error-formatter
-                                         :require-result false)]
-      (is (= {:status "ok"} result))
+                                         :require-value false)]
+      (is (= {:status "ok"} value))
       (is (str/includes? (str output) "{\"level\":\"debug\",\"message\":\"Processing\"}")
           "spill-formatted supports JSON-style custom formatters"))))
 
@@ -73,15 +73,15 @@
                           (doseq [log logs]
                             (swap! output conj (str "LOGGED: " (:value log))))
                           nil)
-          result (extract-spouts/spill-formatted bucket
+          value (extract-spouts/spill-formatted bucket
                                          :log-formatter log-formatter
-                                         :require-result false)]
-      (is (= "result-value" result))
+                                         :require-value false)]
+      (is (= "result-value" value))
       (is (= ["LOGGED: Test log"] @output)
           "side-effecting formatter is called and modifies external state"))))
 
-(deftest spill-formatted-respects-require-result-test
-  (testing "respects require-result parameter"
+(deftest spill-formatted-respects-require-value-test
+  (testing "respects require-value parameter"
     (let [bucket (bucket/grab nil)
           output (StringWriter.)
           log-formatter identity
@@ -91,5 +91,5 @@
                                            :out output
                                            :log-formatter log-formatter
                                            :error-formatter error-formatter
-                                           :require-result true))
-          "spill-formatted throws exception when result is nil and require-result is true"))))
+                                           :require-value true))
+          "spill-formatted throws exception when value is nil and require-value is true"))))

@@ -6,36 +6,36 @@
   (:import [java.time Instant]))
 
 (deftest pour-into-result-gather-default
-  (testing "result gathers both results by default"
+  (testing "result gathers both values by default"
     (let [ts (Instant/parse "2024-01-15T10:30:00Z")
-          old-bucket (bucket/grab :old-result :logs [{:indent 0 :time ts :level :info :value "old"}])
-          new-bucket (bucket/grab :new-result :logs [{:indent 0 :time ts :level :info :value "new"}])
+          old-bucket (bucket/grab :old-value :logs [{:indent 0 :time ts :level :info :value "old"}])
+          new-bucket (bucket/grab :new-value :logs [{:indent 0 :time ts :level :info :value "new"}])
           result (spouts/pour-into new-bucket old-bucket)]
-      (is (= [:old-result :new-result] (:result result))
-          "result should gather both old and new results by default"))))
+      (is (= [:old-value :new-value] (:value result))
+          "result should gather both old and new values by default"))))
 
 (deftest pour-into-pour-type-gather
-  (testing "gather combines both results into vector"
+  (testing "gather combines both values into vector"
     (let [old-bucket (bucket/grab 42)
           new-bucket (bucket/grab 99)
           result (spouts/pour-into new-bucket old-bucket :pour-type :gather)]
-      (is (= [42 99] (:result result))
+      (is (= [42 99] (:value result))
           "gather should create vector [old new]"))))
 
 (deftest pour-into-pour-type-drop-old
-  (testing "drop-old uses only new bucket's result"
+  (testing "drop-old uses only new bucket's value"
     (let [old-bucket (bucket/grab :old-value)
           new-bucket (bucket/grab :new-value)
           result (spouts/pour-into new-bucket old-bucket :pour-type :drop)]
-      (is (= :new-value (:result result))
-          "drop-old should use new bucket's result only"))))
+      (is (= :new-value (:value result))
+          "drop-old should use new bucket's value only"))))
 
 (deftest pour-into-pour-type-drop-new
-  (testing "drop-new uses only old bucket's result"
+  (testing "drop-new uses only old bucket's value"
     (let [old-bucket (bucket/grab :old-value)
           new-bucket (bucket/grab :new-value)
           result (spouts/pour-into old-bucket new-bucket :pour-type :drop)]
-      (is (= :old-value (:result result))
+      (is (= :old-value (:value result))
           "drop-new should use old bucket's result only"))))
 
 (deftest pour-into-pour-type-stir-in-old-to-new
@@ -43,29 +43,29 @@
     (let [old-bucket (bucket/grab inc) ; old result is a function
           new-bucket (bucket/grab 42) ; new result is a value
           result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in)]
-      (is (= 43 (:result result))
+      (is (= 43 (:value result))
           "should apply old function (inc) to new bucket's value (42)")))
 
   (testing "stir-in-old->new with more complex function"
     (let [old-bucket (bucket/grab (fn [x] (* x 2)))
           new-bucket (bucket/grab 10)
           result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in)]
-      (is (= 20 (:result result))
+      (is (= 20 (:value result))
           "should apply old function to new value"))))
 
 (deftest pour-into-pour-type-stir-in-new-to-old
-  (testing "stir-in-new->old applies new result as function to old bucket"
+  (testing "stir-in-new->old applies new value as function to old bucket"
     (let [old-bucket (bucket/grab 42) ; old result is a value
           new-bucket (bucket/grab inc) ; new result is a function
           result (spouts/pour-into old-bucket new-bucket :pour-type :stir-in)]
-      (is (= 43 (:result result))
+      (is (= 43 (:value result))
           "should apply new function (inc) to old bucket's value (42)")))
 
   (testing "stir-in-new->old with string manipulation"
     (let [old-bucket (bucket/grab "hello")
           new-bucket (bucket/grab clojure.string/upper-case)
           result (spouts/pour-into old-bucket new-bucket :pour-type :stir-in)]
-      (is (= "HELLO" (:result result))
+      (is (= "HELLO" (:value result))
           "should apply new function to old value"))))
 
 (deftest pour-into-id-from-new-bucket

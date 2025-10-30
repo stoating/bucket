@@ -5,12 +5,12 @@
    - :meta   - a metadata map (default: {})
    - :error  - a tuple/vector [exception-or-nil string-or-nil]
    - :logs   - a vector of log entries [indent timestamp level message]
-   - :result - any value or nil
+   - :value - any value or nil
 
    Main helpers:
    - pass       - chain Bucket computations (delegates to monad/bind)
    - pass->     - compose monadic functions (delegates to monad/>>)
-   - stir-in    - apply a pure transform to :result (delegates to monad/fmap)
+   - stir-in    - apply a pure transform to :value (delegates to monad/fmap)
    - consolidate- flatten nested Bucket one level (delegates to monad/join)
    - gather     - collect [Bucket a] into Bucket [a] (delegates to monad/sequence-m)
    - gather-with- map a monadic fn over items and gather (delegates to monad/map-m)
@@ -18,8 +18,8 @@
    - grab       - construct a fresh Bucket with optional initial values (delegates to monad/pure)
 
    Output helpers:
-   - spill      (fb.core.bucket.spouts) - prints logs, handles error, returns :result; optionally fails on nil
-   - pour-into  (fb.core.bucket.spouts) - appends logs to external log vector; optionally fails if :result is nil"
+   - spill      (fb.core.bucket.spouts) - prints logs, handles error, returns :value; optionally fails on nil
+   - pour-into  (fb.core.bucket.spouts) - appends logs to external log vector; optionally fails if :value is nil"
   (:require
    [monad :as monad]
    [schemas.bucket :as bs]))
@@ -52,14 +52,14 @@
    [:=> [:cat PureFunction Bucket] Bucket]
    ```
 
-   Applies a pure function to the :result value when no error is present.
+   Applies a pure function to the :value value when no error is present.
    Preserves logs unchanged and short-circuits on error.
 
    Args:
    - f: (value -> new-value)
    - bucket: Bucket map
 
-   Returns: Bucket with transformed :result"
+   Returns: Bucket with transformed :value"
   {:malli/schema [:=> [:cat bs/PureFunction bs/Bucket] bs/Bucket]}
   [f bucket]
   (monad/fmap f bucket))
@@ -72,11 +72,11 @@
    [:=> [:cat Bucket] Bucket]
    ```
 
-   Takes a Bucket whose :result is itself a Bucket, merges logs from both
+   Takes a Bucket whose :value is itself a Bucket, merges logs from both
    levels, and returns a single-level Bucket. Short-circuits on outer error.
 
    Args:
-   - bucket: Bucket map, possibly nested in :result
+   - bucket: Bucket map, possibly nested in :value
 
    Returns: flattened Bucket"
   {:malli/schema [:=> [:cat bs/Bucket] bs/Bucket]}
@@ -92,7 +92,7 @@
    ```
 
    Takes a function f: (a -> b) and returns a function g: (Bucket a -> Bucket b)
-   that applies f to the :result when no error is present, preserving logs.
+   that applies f to the :value when no error is present, preserving logs.
 
    Args:
    - f: plain function
@@ -123,7 +123,7 @@
   (monad/>> f g))
 
 (defn gather
-  "Collect a sequence of Bucket values into a single Bucket of a vector of results.
+  "Collect a sequence of Bucket values into a single Bucket of a vector of values.
 
    Schema:
    ```clojure
@@ -135,13 +135,13 @@
    Args:
    - buckets: sequence of Bucket values
 
-   Returns: Bucket with :result vector of results or the first error encountered"
+   Returns: Bucket with :value vector or the first error encountered"
   {:malli/schema [:=> [:cat bs/BucketSequence] bs/Bucket]}
   [buckets]
   (monad/sequence-m buckets))
 
 (defn gather-with
-  "Map a monadic function over a sequence and gather results (alias of monad/map-m).
+  "Map a monadic function over a sequence and gather values (alias of monad/map-m).
 
    Schema:
    ```clojure
@@ -154,7 +154,7 @@
    - f: function (a -> Bucket b)
    - xs: sequence of input values
 
-   Returns: Bucket with :result vector of transformed values"
+   Returns: Bucket with :value vector of transformed values"
   {:malli/schema [:=> [:cat bs/BucketFunction [:sequential :any]] bs/Bucket]}
   [f xs]
   (monad/map-m f xs))

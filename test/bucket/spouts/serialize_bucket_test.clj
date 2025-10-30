@@ -22,7 +22,7 @@
                       (let [deserialized (edn/read-string serialized)]
                         (is (= (:id bucket) (:id deserialized)))
                         (is (= (:name bucket) (:name deserialized)))
-                        (is (= (:result bucket) (:result deserialized)))
+                        (is (= (:value bucket) (:value deserialized)))
                         (is (= (:meta bucket) (:meta deserialized))))))]
       (is (.contains out-str "test-result")
           "serialize-bucket with EDN format produces valid EDN and prints to stdout"))))
@@ -44,7 +44,7 @@
         (let [file-contents (slurp (first edn-files))
               deserialized (edn/read-string file-contents)]
           (is (= (:id bucket) (:id deserialized)))
-          (is (= (:result bucket) (:result deserialized)))
+          (is (= (:value bucket) (:value deserialized)))
           (is (.contains (.getName (first edn-files)) "test.edn")
               "serialize-bucket writes EDN to file with correct name"))))))
 
@@ -93,11 +93,11 @@
                         (is (map? parsed))
                         (is (contains? parsed "id"))
                         (is (contains? parsed "name"))
-                        (is (contains? parsed "result"))
+                        (is (contains? parsed "value"))
                         (is (contains? parsed "logs"))
                         (is (contains? parsed "meta"))
                         (is (contains? parsed "error"))
-                        (is (= {"user" "alice"} (get parsed "result")))
+                        (is (= {"user" "alice"} (get parsed "value")))
                         (is (= {"version" 1} (get parsed "meta"))))))]
       (is (.contains out-str "alice")
           "serialize-bucket produces valid JSON"))))
@@ -113,7 +113,7 @@
       (is (string? (get-in parsed ["error" "exception"])))
       (is (.contains (get-in parsed ["error" "exception"]) "Test error"))
       (is (= "Error context" (get-in parsed ["error" "stacktrace"])))
-      (is (= "partial-result" (get parsed "result"))
+      (is (= "partial-result" (get parsed "value"))
           "serialize-bucket handles errors in JSON format"))))
 
 (deftest serialize-bucket-json-with-instant-test
@@ -144,7 +144,7 @@
         (is (= 1 (count json-files)))
         (let [file-contents (slurp (first json-files))
               parsed (json/read-value file-contents)]
-          (is (= [1 2 3] (get parsed "result")))
+          (is (= [1 2 3] (get parsed "value")))
           (is (.contains (.getName (first json-files)) "test-json.json")
               "serialize-bucket writes JSON to file with correct extension"))))))
 
@@ -167,12 +167,12 @@
 
 ;; Complex Data Tests
 
-(deftest serialize-bucket-complex-result-test
-  (testing "serializes bucket with complex nested result"
-    (let [complex-result {:users [{:name "alice" :age 30}
+(deftest serialize-bucket-complex-value-test
+  (testing "serializes bucket with complex nested value"
+    (let [complex-value {:users [{:name "alice" :age 30}
                                   {:name "bob" :age 25}]
                           :metadata {:count 2 :tags ["admin" "user"]}}
-          bucket (bucket/grab complex-result)
+          bucket (bucket/grab complex-value)
           json-serialized (spouts/serialize-bucket bucket :format :json :out :none)
           edn-serialized (spouts/serialize-bucket bucket :format :edn :out :none)
           json-parsed (json/read-value json-serialized)
@@ -181,22 +181,22 @@
       (is (= {"users" [{"name" "alice" "age" 30}
                        {"name" "bob" "age" 25}]
               "metadata" {"count" 2 "tags" ["admin" "user"]}}
-             (get json-parsed "result")))
-      (is (= complex-result (:result edn-parsed))
+             (get json-parsed "value")))
+      (is (= complex-value (:value edn-parsed))
           "serialize-bucket handles complex nested data structures"))))
 
-(deftest serialize-bucket-with-nil-result-test
-  (testing "serializes bucket with nil result"
+(deftest serialize-bucket-with-nil-value-test
+  (testing "serializes bucket with nil value"
     (let [bucket (bucket/grab nil :meta {:processed true})
           json-serialized (spouts/serialize-bucket bucket :format :json :out :none)
           edn-serialized (spouts/serialize-bucket bucket :format :edn :out :none)
           json-parsed (json/read-value json-serialized)
           edn-parsed (edn/read-string edn-serialized)]
-      (is (nil? (get json-parsed "result")))
-      (is (nil? (:result edn-parsed)))
+      (is (nil? (get json-parsed "value")))
+      (is (nil? (:value edn-parsed)))
       (is (= {"processed" true} (get json-parsed "meta")))
       (is (= {:processed true} (:meta edn-parsed))
-          "serialize-bucket handles nil results correctly"))))
+          "serialize-bucket handles nil values correctly"))))
 
 ;; Default Behavior Tests
 
@@ -207,7 +207,7 @@
                     (let [serialized (spouts/serialize-bucket bucket)]
                       (is (string? serialized))
                       (let [deserialized (edn/read-string serialized)]
-                        (is (= (:result bucket) (:result deserialized))))))]
+                        (is (= (:value bucket) (:value deserialized))))))]
       (is (.contains out-str "default-test")
           "serialize-bucket defaults to EDN format and stdout output"))))
 
@@ -260,7 +260,7 @@
           deserialized (edn/read-string serialized)]
       (is (= (:id original) (:id deserialized)))
       (is (= (:name original) (:name deserialized)))
-      (is (= (:result original) (:result deserialized)))
+      (is (= (:value original) (:value deserialized)))
       (is (= (:logs original) (:logs deserialized)))
       (is (= (:meta original) (:meta deserialized)))
       (is (= (:error original) (:error deserialized))

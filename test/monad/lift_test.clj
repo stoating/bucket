@@ -10,7 +10,7 @@
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result "A!"
+              :value "A!"
               :error [nil nil]
               :logs []}
              r)

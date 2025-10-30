@@ -1,5 +1,5 @@
 (ns bucket.combinators.gather-test
-  "Bucket/gather - collect sequence of Buckets into one Bucket containing results."
+  "Bucket/gather - collect sequence of Buckets into one Bucket containing values."
   (:require [bucket :as bucket]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))
@@ -14,28 +14,28 @@
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result 1
+              :value 1
               :error [nil nil]
               :logs []}
              bucket-one))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result 2
+              :value 2
               :error [nil nil]
               :logs []}
              bucket-two))
       (is (= {:id (:id bucket-three)
               :name (str (:id bucket-three) "-bucket")
               :meta {}
-              :result 3
+              :value 3
               :error [nil nil]
               :logs []}
              bucket-three))
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result [1 2 3]
+              :value [1 2 3]
               :error [nil nil]
               :logs []}
              result)
@@ -51,21 +51,21 @@
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result "x"
+              :value "x"
               :error [nil nil]
               :logs [l1]}
              bucket-one))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result "y"
+              :value "y"
               :error [nil nil]
               :logs [l2]}
              bucket-two))
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result ["x" "y"]
+              :value ["x" "y"]
               :error [nil nil]
               :logs [l1 l2]}
              result)
@@ -81,21 +81,21 @@
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result 1
+              :value 1
               :error [nil nil]
               :logs []}
              bucket-one))
       (is (= {:id (:id bucket-two)
               :name (str (:id bucket-two) "-bucket")
               :meta {}
-              :result 3
+              :value 3
               :error [nil nil]
               :logs []}
              bucket-two))
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["boom"]
               :logs []}
              result)
@@ -111,14 +111,14 @@
       (is (= {:id (:id bucket-one)
               :name (str (:id bucket-one) "-bucket")
               :meta {}
-              :result :ok
+              :value :ok
               :error [nil nil]
               :logs [l]}
              bucket-one))
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error [ex "ctx"]
               :logs [l]}
              result)
@@ -147,7 +147,7 @@
           bucket-two (bucket/grab "y" :logs [l2] :meta {:id 2 :stage :second})
           result (bucket/gather [bucket-one bucket-two])]
       (is (= ["x" "y"]
-             (:result result)))
+             (:value result)))
       (is (= {}
              (:meta result))
           "metadata is not preserved or merged in gather, new bucket has empty meta"))))

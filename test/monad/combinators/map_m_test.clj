@@ -12,24 +12,24 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result [2 4 6]
+              :value [2 4 6]
               :error [nil nil]
               :logs [{:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :debug :value "* 1"}
                      {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :debug :value "* 2"}
                      {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :debug :value "* 3"}]}
              res)
-          "map-m applies function to each element and collects results with logs")))
+          "map-m applies function to each element and collects values with logs")))
 
   (testing "empty list handled"
     (let [res (monad/map-m (fn [x] (monad/pure x)) [])]
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result []
+              :value []
               :error [nil nil]
               :logs []}
              res)
-          "map-m returns empty result for empty input"))))
+          "map-m returns empty value for empty input"))))
 
 (deftest map-m-fails-fast
   (testing "error on first element"
@@ -40,7 +40,7 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["must be positive"]
               :logs []}
              res)
@@ -56,7 +56,7 @@
       (is (= {:id (:id res)
               :name (str (:id res) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["boom"]
               :logs [l l]}
              res)

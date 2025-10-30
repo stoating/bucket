@@ -9,12 +9,12 @@
     (let [l {:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "ok"}
           monad-one (monad/pure {:a 1} :logs [l])
           r (monad/bind monad-one monad/pure)]
-      (is (= (select-keys monad-one [:result :error :logs :meta])
-             (select-keys r [:result :error :logs :meta])))
+      (is (= (select-keys monad-one [:value :error :logs :meta])
+             (select-keys r [:value :error :logs :meta])))
       (is (= {:id (:id r)
               :name (str (:id r) "-bucket")
               :meta {}
-              :result {:a 1}
+              :value {:a 1}
               :error [nil nil]
               :logs [l]}
              r)

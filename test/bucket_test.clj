@@ -14,36 +14,36 @@
      {:indent 2 :time ts :level :warning :value "second"}]))
 
 (deftest spill-prints-and-returns
-  (testing "spill prints logs to stdout and returns result"
+  (testing "spill prints logs to stdout and returns value"
     (let [resp (monad/pure :ok :logs (sample-logs))
           out-str (with-out-str
                     (let [ret (spouts/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root)]
                       (is (= :ok ret))))]
       (is (re-find #"INFO" out-str))
       (is (re-find #"WARNING" out-str)
-          "spill prints all log levels and returns the bucket result"))))
+          "spill prints all log levels and returns the bucket value"))))
 
 (deftest spill-handles-error-without-exit-when-nil
-  (testing "spill handles errors gracefully when :require-result is false"
+  (testing "spill handles errors gracefully when :require-value is false"
     (let [e (ex-info "boom" {})
           resp (bucket/grab :error [e nil])
           out-str (with-out-str
-                    (let [ret (spouts/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root :exit :continue :require-result false)]
+                    (let [ret (spouts/spill resp :log-out :stdout :meta-out :none :out-dir th/test-temp-root :exit :continue :require-value false)]
                       (is (nil? ret))))]
       (is (re-find #"error class" out-str)
           "spill prints error information and returns nil without exiting"))))
 
 (deftest pour-into-combines-logs-purely
-  (testing "pour-into combines results and logs from two buckets"
+  (testing "pour-into combines values and logs from two buckets"
     (let [ts (Instant/now)
           old-bucket (monad/pure :res :logs [{:indent 0 :time ts :level :info :value "child"}])
           new-bucket (monad/pure :new-value)
           combined (spouts/pour-into new-bucket old-bucket)]
-      (is (= [:res :new-value] (:result combined)))
+      (is (= [:res :new-value] (:value combined)))
       (is (= (:id new-bucket) (:id combined)))
       (is (= [{:indent 0 :time ts :level :info :value "child"}]
              (:logs combined))
-          "pour-into gathers results, uses new bucket id, and combines logs"))))
+          "pour-into gathers values, uses new bucket id, and combines logs"))))
 
 (deftest pour-into-respects-base-indent
   (testing "pour-into preserves log order by timestamp with base indent"
@@ -52,7 +52,7 @@
           old-bucket (monad/pure :ok :logs [{:indent 0 :time ts2 :level :info :value "child"}])
           new-bucket (monad/pure :new-value :logs [{:indent 2 :time ts1 :level :info :value "base"}])
           combined (spouts/pour-into new-bucket old-bucket)]
-      (is (= [:ok :new-value] (:result combined)))
+      (is (= [:ok :new-value] (:value combined)))
       (is (= 2 (count (:logs combined))))
       (is (= "base" (:value (first (:logs combined)))))
       (is (= "child" (:value (second (:logs combined))))

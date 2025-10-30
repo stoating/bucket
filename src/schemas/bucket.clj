@@ -15,7 +15,7 @@
    [:meta {:default {}} map?]
    [:error es/ErrorTuple]
    [:logs ls/Logs]
-   [:result :any]]
+   [:value :any]]
   ```"
   [:map
    [:id {:default (fn [] (ulid/ulid))} string?]
@@ -23,7 +23,7 @@
    [:meta {:default {}} map?]
    [:error es/ErrorTuple]
    [:logs ls/Logs]
-   [:result :any]])
+   [:value :any]])
 
 (def BucketFunction
   "Schema for a function that takes a value and returns a Bucket

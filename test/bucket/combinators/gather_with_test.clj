@@ -11,7 +11,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result [2 4 6 8 10]
+              :value [2 4 6 8 10]
               :error [nil nil]
               :logs []}
              result)
@@ -25,7 +25,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result ["a!" "b!"]
+              :value ["a!" "b!"]
               :error [nil nil]
               :logs [(log-for "a") (log-for "b")]}
              result)
@@ -40,7 +40,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["Must be positive"]
               :logs []}
              result)
@@ -55,7 +55,7 @@
       (is (= {:id (:id result)
               :name (str (:id result) "-bucket")
               :meta {}
-              :result nil
+              :value nil
               :error ["err"]
               :logs [l]}
              result)
@@ -66,7 +66,7 @@
     (let [times-two-with-meta (fn [x] (bucket/grab (* x 2) :meta {:computed true :value x}))
           result (bucket/gather-with times-two-with-meta [1 2 3])]
       (is (= [2 4 6]
-             (:result result)))
+             (:value result)))
       (is (= {}
              (:meta result))
           "gather-with creates new bucket with empty metadata, ignoring metadata from mapped buckets")))
@@ -76,7 +76,7 @@
           process-with-meta (fn [s] (bucket/grab (str s "!") :logs [(log-for s)] :meta {:item s :stage :processed}))
           result (bucket/gather-with process-with-meta ["a" "b" "c"])]
       (is (= ["a!" "b!" "c!"]
-             (:result result)))
+             (:value result)))
       (is (= {}
              (:meta result))
           "metadata from each mapped bucket is not accumulated in final result"))))

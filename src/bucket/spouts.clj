@@ -8,7 +8,7 @@
             [clj-ulid :as ulid]))
 
 (defn spill
-  "Process a bucket: print logs, handle errors, optionally print metadata, return :result.
+  "Process a bucket: print logs, handle errors, optionally print metadata, return :value.
 
   Args:
   - bucket: Bucket map
@@ -17,15 +17,15 @@
   - error-out: output mode for errors - :none, :stdout, :file, or :both (default :both)
   - exit: exit behavior on error - :success, :fail, or :continue (default :fail)
   - out-dir: directory for file outputs (default: current directory)
-  - require-result: boolean, when true checks if :result is nil (default false)
+  - require-value: boolean, when true checks if :value is nil (default false)
 
-  Returns the :result value (may throw if nil and require-result is true)"
-  [bucket & {:keys [log-out meta-out error-out exit out-dir require-result]
+  Returns the :value value (may throw if nil and require-value is true)"
+  [bucket & {:keys [log-out meta-out error-out exit out-dir require-value]
              :or {log-out :both
                   meta-out :both
                   error-out :both
                   exit :fail
-                  require-result false}}]
+                  require-value false}}]
   (let [name (:name bucket)
         log-formatter (extract/output-formatter log-out log/print {:out log-out :dir out-dir :name name})
         meta-formatter (extract/output-formatter meta-out meta/print {:out meta-out :dir out-dir :name name})
@@ -34,7 +34,7 @@
                              :log-formatter log-formatter
                              :meta-formatter meta-formatter
                              :error-formatter error-formatter
-                             :require-result require-result)))
+                             :require-value require-value)))
 
 (defn pour-into
   "Pour one bucket into another, combining their histories while returning the updated bucket.
@@ -46,13 +46,14 @@
    - :meta-merge-type (optional) - metadata merge strategy (:merge or :snapshot, default :merge)
    - :pour-type (optional) - result combination strategy (:gather, :drop (from), :stir-in (from->to))
 
-   Returns: updated bucket containing merged logs, metadata, and result."
+   Returns: updated bucket containing merged logs, metadata, and value."
   [to-bucket from-bucket & {:keys [new-name meta-merge-type pour-type]
                             :or {meta-merge-type :merge
+                                 new-name (:name to-bucket)
                                  pour-type :gather}}]
   {:id (:id to-bucket)
-   :name (or new-name (:name to-bucket))
-   :result (chain/combine-results from-bucket to-bucket pour-type)
+   :name new-name
+   :value (chain/combine-values from-bucket to-bucket pour-type)
    :logs (chain/combine-logs from-bucket to-bucket)
    :meta (chain/merge-metadata from-bucket to-bucket meta-merge-type)
    :error (or (:error to-bucket) [nil nil])})
@@ -67,10 +68,10 @@
   [bucket]
   (:error bucket))
 
-(defn drain-result
-  "Extract just the result from a bucket. Returns the :result value."
+(defn drain-value
+  "Extract just the value from a bucket. Returns the :value value."
   [bucket]
-  (:result bucket))
+  (:value bucket))
 
 (defn drain-id
   "Extract just the ID from a bucket. Returns the :id value."

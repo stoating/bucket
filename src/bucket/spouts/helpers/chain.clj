@@ -21,10 +21,10 @@
                     updated-buckets (conj existing-buckets new-bucket)]
                 (assoc to-meta :previous-buckets updated-buckets))))
 
-(defn combine-results
-  "Combine results from two buckets according to pour-type strategy."
+(defn combine-values
+  "Combine values from two buckets according to pour-type strategy."
   [from-bucket to-bucket pour-type]
   (case (or pour-type :gather)
-    :gather (:result (bucket/gather [from-bucket to-bucket]))
-    :drop (:result to-bucket)
-    :stir-in (:result (bucket/stir-in (:result from-bucket) to-bucket))))
+    :gather (:value (bucket/gather [from-bucket to-bucket]))
+    :drop (:value to-bucket)
+    :stir-in (:value (bucket/stir-in (:value from-bucket) to-bucket))))

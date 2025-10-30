@@ -16,9 +16,9 @@
               :meta (:meta bucket)
               :log-count 2
               :error-type nil
-              :result-type :map}
+              :value-type :map}
              summary)
-          "summarize extracts log count, error status, and result type for successful bucket"))))
+          "summarize extracts log count, error status, and value type for successful bucket"))))
 
 (deftest summarize-error-bucket-test
   (testing "summarizes bucket with exception"
@@ -30,9 +30,9 @@
               :meta (:meta bucket)
               :log-count 0
               :error-type :exception
-              :result-type :nil}
+              :value-type :nil}
              summary)
-          "summarize identifies exception errors and nil results"))))
+          "summarize identifies exception errors and nil values"))))
 
 (deftest summarize-message-error-bucket-test
   (testing "summarizes bucket with message error"
@@ -43,15 +43,15 @@
               :meta (:meta bucket)
               :log-count 0
               :error-type :message
-              :result-type :nil}
+              :value-type :nil}
              summary)
           "summarize identifies message-only errors"))))
 
-(deftest summarize-result-types-test
-  (testing "identifies different result types correctly"
-    (is (= :string (:result-type (spouts/summarize (bucket/grab "text")))))
-    (is (= :number (:result-type (spouts/summarize (bucket/grab 42)))))
-    (is (= :boolean (:result-type (spouts/summarize (bucket/grab true)))))
-    (is (= :vector (:result-type (spouts/summarize (bucket/grab [1 2 3])))))
-    (is (= :seq (:result-type (spouts/summarize (bucket/grab '(1 2 3)))))
-        "summarize correctly identifies string, number, boolean, vector, and seq result types")))
+(deftest summarize-value-types-test
+  (testing "identifies different value types correctly"
+    (is (= :string (:value-type (spouts/summarize (bucket/grab "text")))))
+    (is (= :number (:value-type (spouts/summarize (bucket/grab 42)))))
+    (is (= :boolean (:value-type (spouts/summarize (bucket/grab true)))))
+    (is (= :vector (:value-type (spouts/summarize (bucket/grab [1 2 3])))))
+    (is (= :seq (:value-type (spouts/summarize (bucket/grab '(1 2 3)))))
+        "summarize correctly identifies string, number, boolean, vector, and seq value types")))
