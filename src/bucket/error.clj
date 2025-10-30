@@ -39,11 +39,11 @@
 
    Args:
    - name: optional base filename (without extension)
-   - timestamp: boolean, whether to prepend timestamp to filename
+   - timestamp?: boolean, whether to prepend timestamp to filename
 
    Returns: filename string with .log extension"
-  [name timestamp]
-  (let [ts (when timestamp (format/filename-timestamp))]
+  [name timestamp?]
+  (let [ts (when timestamp? (format/filename-timestamp))]
     (cond
       (and ts name) (str ts "-" name ".log")
       ts (str ts ".log")
@@ -57,18 +57,18 @@
    - error: [exception-or-nil stacktrace-or-nil]
    - dir: optional output directory (default: ./errors)
    - name: optional base filename (without extension)
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
+   - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
 
    Filename generation:
    - If both name and timestamp: <timestamp>-<n>.log
    - If only timestamp: <timestamp>.log
    - If only name: <n>.log
    - If neither: error.log"
-  [error & {:keys [dir name timestamp]
-            :or {dir "errors" timestamp true}}]
+  [error & {:keys [dir name timestamp?]
+            :or {dir "errors" timestamp? true}}]
   (let [dir-file (io/file dir)]
     (.mkdirs dir-file))
-  (let [filename (error-filename name timestamp)
+  (let [filename (error-filename name timestamp?)
         filepath (str dir "/" filename)
         [err stacktrace] error]
     (when err
@@ -89,7 +89,7 @@
    - out: output mode - :none, :stdout, :file, or :both (default :both)
    - dir: optional output directory for :file or :both modes (default: ./errors)
    - name: optional base filename (without extension) for :file or :both modes
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
+   - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
    - exit: exit behavior - :success, :fail, or :continue (default :fail)
 
    Output modes:
@@ -108,13 +108,13 @@
    - :success  - Exit with status 0 if error exists
    - :fail     - Exit with status 1 if error exists (default)
    - :continue - Don't exit, just log/print"
-  [error & {:keys [out dir name timestamp exit]
+  [error & {:keys [out dir name timestamp? exit]
             :or {out :both exit :fail}}]
   (let [[err _] error
         file-opts (cond-> {}
                     dir (assoc :dir dir)
                     name (assoc :name name)
-                    (some? timestamp) (assoc :timestamp timestamp))]
+                    (some? timestamp?) (assoc :timestamp? timestamp?))]
     ;; Handle output
     (when err
       (case out

@@ -2,9 +2,9 @@
   (:require [bin.format :as format]
             [bucket :as bucket]
             [bucket.log :as log]
+            [bucket.log.entry :as log-entry]
             [bucket.log.secret :as secret]
             [bucket.meta :as meta]
-            [bucket.log.temp :as temp]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest testing is are use-fixtures]]
@@ -16,7 +16,7 @@
 (deftest make-entry-test
   (testing "make-entry with different arities"
     (testing "single argument"
-      (let [entry (temp/make-entry "test message")]
+      (let [entry (log-entry/make "test message")]
         (is (= "test message" (:value entry)))
         (is (= :info (:level entry)))
         (is (= 0 (:indent entry)))
@@ -24,7 +24,7 @@
             "make-entry creates entry with message, default :info level, 0 indent, and timestamp")))
 
     (testing "message and level"
-      (let [entry (temp/make-entry "test message" :level :error)]
+      (let [entry (log-entry/make "test message" :level :error)]
         (is (= "test message" (:value entry)))
         (is (= :error (:level entry)))
         (is (= 0 (:indent entry)))
@@ -32,7 +32,7 @@
             "make-entry creates entry with message, specified level, 0 indent, and timestamp")))
 
     (testing "message, level, and indent"
-      (let [entry (temp/make-entry "test message" :level :warning :indent 3)]
+      (let [entry (log-entry/make "test message" :level :warning :indent 3)]
         (is (= "test message" (:value entry)))
         (is (= :warning (:level entry)))
         (is (= 3 (:indent entry)))
@@ -260,41 +260,41 @@
       (is (str/includes? formatted "-")
           "formatted message includes level, message text, indent spaces, and separators"))))
 
-(deftest print-logs-test
+(deftest print-test
   (testing "printing logs to output stream"
-    (let [logs [(temp/make-entry "first message")
-                (temp/make-entry "second message" :level :error :indent 1)]
+    (let [logs [(log-entry/make "first message")
+                (log-entry/make "second message" :level :error :indent 1)]
           result (with-out-str
-                   (log/print-logs logs :out :stdout))]
+                   (log/print logs :out :stdout))]
       (is (str/includes? result "first message"))
       (is (str/includes? result "second message"))
       (is (str/includes? result "INFO"))
       (is (str/includes? result "ERROR")
-          "print-logs outputs all log entries with their levels to stdout")))
+          "print outputs all log entries with their levels to stdout")))
 
   (testing "printing logs from a bucket sink"
     (let [bucket (-> (bucket/grab :value {:status :ok})
                      (log/log "bucket message" :level :warning)
                      (log/log "second message"))
           result (with-out-str
-                   (log/print-logs bucket :out :stdout))]
+                   (log/print bucket :out :stdout))]
       (is (str/includes? result "bucket message"))
       (is (str/includes? result "second message"))
       (is (str/includes? result "WARNING"))
       (is (str/includes? result "INFO")
-          "print-logs accepts a bucket sink and prints its logs with levels"))))
+          "print accepts a bucket sink and prints its logs with levels"))))
 
 (deftest filter-test
   (let [base-time (Instant/parse "2024-01-01T00:00:00Z")
-        logs [(-> (temp/make-entry "debug msg" :level :debug :indent 1)
+        logs [(-> (log-entry/make "debug msg" :level :debug :indent 1)
                   (assoc :time (inst-ms base-time)))
-              (-> (temp/make-entry "info msg" :level :info :indent 3)
+              (-> (log-entry/make "info msg" :level :info :indent 3)
                   (assoc :time (inst-ms (.plusSeconds base-time 60))))
-              (-> (temp/make-entry "warning msg" :level :warning :indent 5)
+              (-> (log-entry/make "warning msg" :level :warning :indent 5)
                   (assoc :time (inst-ms (.plusSeconds base-time 120))))
-              (-> (temp/make-entry "error msg" :level :error :indent 2)
+              (-> (log-entry/make "error msg" :level :error :indent 2)
                   (assoc :time (inst-ms (.plusSeconds base-time 180))))
-              (-> (temp/make-entry "critical error" :level :critical :indent 6)
+              (-> (log-entry/make "critical error" :level :critical :indent 6)
                   (assoc :time (inst-ms (.plusSeconds base-time 240))))]
         bucket (assoc (bucket/grab :value {:status :ok}) :logs logs)]
     (testing "default debug-only filtering"
@@ -406,10 +406,10 @@
             "logs accumulate across operations with correct levels and indents")))
 
     (testing "log filtering for different verbosity levels"
-      (let [logs [(temp/make-entry "debug info" :level :debug)
-                  (temp/make-entry "general info" :level :info)
-                  (temp/make-entry "warning" :level :warning)
-                  (temp/make-entry "error occurred" :level :error)]
+      (let [logs [(log-entry/make "debug info" :level :debug)
+                  (log-entry/make "general info" :level :info)
+                  (log-entry/make "warning" :level :warning)
+                  (log-entry/make "error occurred" :level :error)]
             info-and-above (log/filter logs :type :gte :value :info)
             warning-and-above (log/filter logs :type :gte :value :warning)]
         (is (= 3 (count info-and-above)))
@@ -427,20 +427,20 @@
 
 (deftest log-output-format-test
   (testing "CLI-compatible log output format"
-    (let [entry (temp/make-entry "CLI operation completed")
+    (let [entry (log-entry/make "CLI operation completed")
           printed-output (with-out-str
-                           (log/print-logs [entry] :out :stdout))]
+                           (log/print [entry] :out :stdout))]
       (is (str/includes? printed-output "INFO"))
       (is (str/includes? printed-output "CLI operation completed"))
       (is (str/includes? printed-output "\n")
           "printed log output includes level, message, and newline"))))
 
 (deftest log-file-output-test
-  (testing "print-logs writes to file with :out :file"
-    (let [logs [(temp/make-entry "First log message")
-                (temp/make-entry "Second log message" :level :error :indent 1)]
+  (testing "print writes to file with :out :file"
+    (let [logs [(log-entry/make "First log message")
+                (log-entry/make "Second log message" :level :error :indent 1)]
           test-dir (str th/test-temp-root "/logs")]
-      (log/print-logs logs :out :file :dir test-dir :timestamp false :name "test")
+      (log/print logs :out :file :dir test-dir :timestamp? false :name "test")
       (let [file (io/file (str test-dir "/test.log"))
             content (slurp file)]
         (is (.exists file))
@@ -448,34 +448,34 @@
         (is (str/includes? content "First log message"))
         (is (str/includes? content "ERROR"))
         (is (str/includes? content "Second log message")
-            "print-logs writes all log entries with levels to file"))))
+            "print writes all log entries with levels to file"))))
 
-  (testing "print-logs writes to file with timestamp"
-    (let [logs [(temp/make-entry "Timestamped log")]
+  (testing "print writes to file with timestamp"
+    (let [logs [(log-entry/make "Timestamped log")]
           test-dir (str th/test-temp-root "/logs")]
-      (log/print-logs logs :out :file :dir test-dir :timestamp true)
+      (log/print logs :out :file :dir test-dir :timestamp? true)
       (let [files (.listFiles (io/file test-dir))]
         (is (pos? (count files)))
         (is (str/ends-with? (.getName (first files)) ".log")
-            "print-logs creates timestamped log files"))))
+            "print creates timestamped log files"))))
 
-  (testing "print-logs with :out :both writes to file and stdout"
-    (let [logs [(temp/make-entry "Both output log" :level :warning)]
+  (testing "print with :out :both writes to file and stdout"
+    (let [logs [(log-entry/make "Both output log" :level :warning)]
           test-dir (str th/test-temp-root "/logs")
           stdout-output (with-out-str
-                          (log/print-logs logs :out :both :dir test-dir :timestamp false :name "both-test"))]
+                          (log/print logs :out :both :dir test-dir :timestamp? false :name "both-test"))]
       (is (str/includes? stdout-output "WARNING"))
       (is (str/includes? stdout-output "Both output log"))
       (let [file (io/file (str test-dir "/both-test.log"))
             content (slurp file)]
         (is (.exists file))
         (is (str/includes? content "Both output log")
-            "print-logs with :out :both writes to both stdout and file"))))
+            "print with :out :both writes to both stdout and file"))))
 
-  (testing "print-meta writes to file"
+  (testing "print writes to file"
     (let [meta {:bucket-name "test-bucket" :total-items 42}
           test-dir (str th/test-temp-root "/meta")]
-      (meta/print-meta meta :out :file :dir test-dir :timestamp false :name "test-meta")
+      (meta/print meta :out :file :dir test-dir :timestamp? false :name "test-meta")
       (let [file (io/file (str test-dir "/test-meta.edn"))
             content (slurp file)]
         (is (.exists file))
@@ -483,15 +483,15 @@
         (is (str/includes? content "test-bucket"))
         (is (str/includes? content ":total-items"))
         (is (str/includes? content "42")
-            "print-meta writes metadata to edn file"))))
+            "print writes metadata to edn file"))))
 
-  (testing "print-meta with :out :both writes to file and stdout"
+  (testing "print with :out :both writes to file and stdout"
     (let [meta {:test-key "test-value"}
           test-dir (str th/test-temp-root "/meta")
           stdout-output (with-out-str
-                          (meta/print-meta meta :out :both :dir test-dir :timestamp false :name "both-meta"))]
+                          (meta/print meta :out :both :dir test-dir :timestamp? false :name "both-meta"))]
       (is (str/includes? stdout-output ":test-key"))
       (is (str/includes? stdout-output "test-value"))
       (let [file (io/file (str test-dir "/both-meta.edn"))]
         (is (.exists file)
-            "print-meta with :out :both writes to both stdout and file")))))
+            "print with :out :both writes to both stdout and file")))))

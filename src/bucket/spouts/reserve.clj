@@ -6,10 +6,10 @@
   "Serialize and output a bucket in EDN or JSON format.
 
   Returns the serialized string."
-  [bucket & {:keys [format out dir name timestamp]
+  [bucket & {:keys [format out dir name timestamp?]
              :or {format :edn
                   out :stdout
-                  timestamp true}}]
+                  timestamp? true}}]
   (let [serialized (case format
                      :edn (transform/serialize-to-edn bucket)
                      :json (transform/serialize-to-json bucket)
@@ -20,13 +20,13 @@
       :file (transform/write-serialized-to-file serialized format
                                       :dir dir
                                       :name name
-                                      :timestamp timestamp)
+                                      :timestamp? timestamp?)
       :both (do
               (println serialized)
               (transform/write-serialized-to-file serialized format
                                         :dir dir
                                         :name name
-                                        :timestamp timestamp)))
+                                        :timestamp? timestamp?)))
     serialized))
 
 (defn summarize

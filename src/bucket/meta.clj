@@ -6,10 +6,10 @@
    - :time: java.time.Instant timestamp
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
-  (:refer-clojure :exclude [filter])
-  (:require [bucket.meta.temp :as temp]))
+  (:refer-clojure :exclude [filter print])
+  (:require [bucket.meta.print :as print]))
 
-(defn print-meta
+(defn print
   "Print bucket metadata according to output mode.
 
    Args:
@@ -17,7 +17,7 @@
    - out: output mode - :none, :stdout, :file, or :both (default :both)
    - dir: optional output directory for :file or :both modes (default: ./meta)
    - name: optional base filename (without extension) for :file or :both modes
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
+   - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
 
    Output modes:
    - :none   - Don't output metadata anywhere
@@ -26,20 +26,20 @@
    - :both   - Print to stdout AND write to .edn file
 
    Filename generation:
-   - If both name and timestamp: <timestamp>-<n>.edn
-   - If only timestamp: <timestamp>.edn
+   - If both name and timestamp?: <timestamp>-<n>.edn
+   - If only timestamp?: <timestamp>.edn
    - If only name: <n>.edn
    - If neither: meta.edn"
-  [meta & {:keys [out dir name timestamp]
+  [meta & {:keys [out dir name timestamp?]
            :or {out :both}}]
   (let [file-opts (cond-> {}
                     dir (assoc :dir dir)
                     name (assoc :name name)
-                    (some? timestamp) (assoc :timestamp timestamp))]
+                    (some? timestamp?) (assoc :timestamp? timestamp?))]
     (case out
       :none nil
-      :stdout (temp/print-meta-to-stdout meta)
-      :file (apply temp/print-meta-to-file meta (apply concat file-opts))
+      :stdout (print/->stdout meta)
+      :file (apply print/->file meta (apply concat file-opts))
       :both (do
-              (temp/print-meta-to-stdout meta)
-              (apply temp/print-meta-to-file meta (apply concat file-opts))))))
+              (print/->stdout meta)
+              (apply print/->file meta (apply concat file-opts))))))

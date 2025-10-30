@@ -37,7 +37,7 @@
             log-function? true
             redirect-stdout? true
             redirect-mode :basic
-            spacing default/default-spacing
+            spacing default/spacing
             stack-exclude {}}}]
    (cond-> f
      catch-error? catch-error

@@ -1,5 +1,5 @@
 (ns bucket.wraps.redirect-stdout
-  (:require [bin.defaults :as defaults]
+  (:require [bin.defaults :as default]
             [bucket.log :as log]
             [clojure.math :as math]
             [clojure.string :as str]))
@@ -297,7 +297,7 @@
    - f: function to wrap (takes map with :logs, returns map with :logs)
    - :mode           (optional) either :basic (default) or :depth-aware
    - :spacing        (optional) indentation width per depth level (defaults to half of
-                     `defaults/default-spacing`, rounded up); only meaningful for :depth-aware
+                     `default/spacing`, rounded up); only meaningful for :depth-aware
    - :stack-exclude  (optional) map forwarded to `count-application-frames-in-stack`
                      (supports :exclude prefixes and :mode :append/:replace); only used for
                      :depth-aware mode
@@ -328,7 +328,7 @@
      ;; => Bucket with :result 10 and captured output in logs"
   [f & {:keys [mode spacing stack-exclude]
         :or {mode :basic
-             spacing (int (math/ceil (/ defaults/default-spacing 2.0)))
+             spacing (int (math/ceil (/ default/spacing 2.0)))
              stack-exclude {}}}]
   (let [wrapped (fn [input-map]
                   (let [initial-logs (:logs input-map [])]

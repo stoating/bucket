@@ -270,7 +270,7 @@
     (let [ex (RuntimeException. "File output test")
           error-tuple [ex "test stacktrace"]
           test-dir (str th/test-temp-root "/errors")]
-      (error/handle-error error-tuple :out :file :dir test-dir :timestamp false :name "test" :exit nil)
+      (error/handle-error error-tuple :out :file :dir test-dir :timestamp? false :name "test" :exit nil)
       (let [file (io/file (str test-dir "/test.log"))
             content (slurp file)]
         (is (.exists file))
@@ -283,7 +283,7 @@
     (let [ex (Exception. "Timestamp test")
           error-tuple [ex nil]
           test-dir (str th/test-temp-root "/errors")]
-      (error/handle-error error-tuple :out :file :dir test-dir :timestamp true :exit nil)
+      (error/handle-error error-tuple :out :file :dir test-dir :timestamp? true :exit nil)
       (let [files (.listFiles (io/file test-dir))]
         (is (pos? (count files)))
         (is (str/ends-with? (.getName (first files)) ".log")
@@ -294,7 +294,7 @@
           error-tuple [ex "both stacktrace"]
           test-dir (str th/test-temp-root "/errors")
           stdout-output (with-out-str
-                          (error/handle-error error-tuple :out :both :dir test-dir :timestamp false :name "both-test" :exit nil))]
+                          (error/handle-error error-tuple :out :both :dir test-dir :timestamp? false :name "both-test" :exit nil))]
       (is (str/includes? stdout-output "error class:"))
       (is (str/includes? stdout-output "Both output test"))
       (let [file (io/file (str test-dir "/both-test.log"))

@@ -27,8 +27,8 @@
                   exit :fail
                   require-result false}}]
   (let [name (:name bucket)
-        log-formatter (extract/output-formatter log-out log/print-logs {:out log-out :dir out-dir :name name})
-        meta-formatter (extract/output-formatter meta-out meta/print-meta {:out meta-out :dir out-dir :name name})
+        log-formatter (extract/output-formatter log-out log/print {:out log-out :dir out-dir :name name})
+        meta-formatter (extract/output-formatter meta-out meta/print {:out meta-out :dir out-dir :name name})
         error-formatter (extract/output-formatter error-out error/handle-error {:out error-out :dir out-dir :name name :exit exit})]
     (extract/spill-formatted bucket
                              :log-formatter log-formatter

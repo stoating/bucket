@@ -19,7 +19,7 @@
 
    Returns: wrapped function with entry/exit logging."
   [f & {:keys [spacing]
-        :or {spacing default/default-spacing}}]
+        :or {spacing default/spacing}}]
   (let [wrapped (fn [opts]
                   (let [logs (:logs opts [])
                         base-indent (if (empty? logs) 0 (:indent (last logs)))
@@ -28,16 +28,16 @@
                                   "")
 
                         entry-logs (log/log logs
-                                                (str "--> " fname)
-                                                :level :info
-                                                :indent indent
-                                                :indent-next indent)
+                                            (str "--> " fname)
+                                            :level :info
+                                            :indent indent
+                                            :indent-next indent)
                         response (f (assoc opts :logs entry-logs))
                         response-logs (or (:logs response) entry-logs)
                         final-logs (log/log response-logs
-                                                (str "<-- " fname)
-                                                :level :info
-                                                :indent indent
-                                                :indent-next base-indent)]
+                                            (str "<-- " fname)
+                                            :level :info
+                                            :indent indent
+                                            :indent-next base-indent)]
                     (assoc response :logs final-logs)))]
     (with-meta wrapped (meta f))))

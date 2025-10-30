@@ -1,12 +1,9 @@
-(ns bucket.log.temp
-  (:require [bin.format :as format]
-            [bucket.log.protocol :as protocol]
-            [bucket.log.secret :as secret]
-            [clojure.string :as str]
-            [clojure.java.io :as io])
+(ns bucket.log.entry
+  (:require [bucket.log.protocol :as protocol]
+            [bucket.log.secret :as secret])
   (:import [java.time Instant]))
 
-(defn make-entry
+(defn make
   "Create a log entry map.
 
    Supports both positional and keyword arguments:
@@ -33,7 +30,7 @@
 
    Returns: {:indent int :time Long :level keyword :value string}"
   ([value]
-   (make-entry :value value))
+   (make :value value))
   ([a b & rest]
    (let [args (if (odd? (+ 2 (count rest)))
                 (apply hash-map :value a b rest)
@@ -44,47 +41,7 @@
       :level (or level :info)
       :value value})))
 
-(defn print-log-to-stdout
-  "Print a sequence of pre-formatted log lines to stdout."
-  [formatted-logs]
-  (doseq [formatted formatted-logs]
-    (println formatted)))
-
-(defn print-log-to-file
-  "Write a sequence of pre-formatted log lines to a file.
-
-   Args:
-   - logs: sequence of formatted log strings
-   - dir: optional output directory (default: ./logs)
-   - name: optional base filename (without extension)
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
-
-   Filename generation:
-   - If both name and timestamp: <timestamp>-<n>.log
-   - If only timestamp: <timestamp>.log
-   - If only name: <n>.log
-   - If neither: logs.log"
-  [logs & {:keys [dir name timestamp]
-           :or {dir "logs" timestamp true}}]
-  (let [dir-file (io/file dir)]
-    (.mkdirs dir-file))
-  (let [ts (when timestamp (format/filename-timestamp))
-        filename (cond
-                   (and ts name) (str ts "-" name ".log")
-                   ts (str ts ".log")
-                   name (str name ".log")
-                   :else "logs.log")
-        filepath (str dir "/" filename)]
-    (spit filepath (str/join "\n" logs))))
-
-(defn ->log-opts
-  "Convert mixed positional/keyword arguments into a unified options map."
-  [a b rest]
-  (if (odd? (+ 2 (count rest)))
-    (apply hash-map :value a b rest)
-    (apply hash-map a b rest)))
-
-(defn append-log-entry
+(defn append
   "Internal shared implementation for appending a log entry to a sink."
   [sink {:keys [value level indent check-secrets indent-next]}]
   (let [logs (protocol/-current-logs sink)
@@ -97,7 +54,7 @@
         actual-message (if (and check-secrets (secret/likely-secret? value))
                          "* log redacted *"
                          value)
-        base-entry (make-entry :value actual-message
+        base-entry (make :value actual-message
                                :level (or level :info)
                                :indent actual-indent)
         entry (cond-> base-entry
@@ -105,13 +62,20 @@
         updated-logs (conj logs entry)]
     (protocol/-with-logs sink updated-logs)))
 
-(defn log-with-level
+(defn ->log-opts
+  "Convert mixed positional/keyword arguments into a unified options map."
+  [a b rest]
+  (if (odd? (+ 2 (count rest)))
+    (apply hash-map :value a b rest)
+    (apply hash-map a b rest)))
+
+(defn append-level
   "Internal helper used by level-specific logging functions.
 
    Mirrors the `log` calling conventions while forcing the :level key."
   ([level sink message]
-   (append-log-entry sink {:value message :level level}))
+   (append sink {:value message :level level}))
   ([level sink a b & rest]
    (let [opts (->log-opts a b rest)
          opts-with-level (assoc opts :level level)]
-     (append-log-entry sink opts-with-level))))
+     (append sink opts-with-level))))

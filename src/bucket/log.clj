@@ -6,14 +6,15 @@
    - :time: java.time.Instant timestamp
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
-  (:refer-clojure :exclude [filter])
+  (:refer-clojure :exclude [filter print])
   (:require [bin.format :as format]
+            [bucket.log.entry :as entry]
             [bucket.log.protocol :as protocol]
-            [bucket.log.temp :as temp]
+            [bucket.log.print :as print]
             [bucket.log.filter :as filter])
   (:import [java.time Instant]))
 
-(defn print-logs
+(defn print
   "Print log entries according to output mode.
 
    Args:
@@ -21,7 +22,7 @@
    - out: output mode - :none, :stdout, :file, or :both (default :both)
    - dir: optional output directory for :file or :both modes (default: ./logs)
    - name: optional base filename (without extension) for :file or :both modes
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
+   - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
 
    Output modes:
    - :none   - Don't output logs anywhere
@@ -30,27 +31,27 @@
    - :both   - Print to stdout AND write to .log file
 
    Filename generation:
-   - If both name and timestamp: <timestamp>-<n>.log
-   - If only timestamp: <timestamp>.log
+   - If both name and timestamp?: <timestamp>-<n>.log
+   - If only timestamp?: <timestamp>.log
    - If only name: <n>.log
    - If neither: logs.log
 
    Each log entry is printed with appropriate formatting."
-  [sink & {:keys [out dir name timestamp]
+  [sink & {:keys [out dir name timestamp?]
            :or {out :both}}]
   (let [logs (protocol/-current-logs sink)
         formatted-logs (map format/log-text logs)
         file-opts (cond-> {}
                     dir (assoc :dir dir)
                     name (assoc :name name)
-                    (some? timestamp) (assoc :timestamp timestamp))]
+                    (some? timestamp?) (assoc :timestamp? timestamp?))]
     (case out
       :none nil
-      :stdout (temp/print-log-to-stdout formatted-logs)
-      :file (apply temp/print-log-to-file formatted-logs (apply concat file-opts))
+      :stdout (print/->stdout formatted-logs)
+      :file (apply print/->file formatted-logs (apply concat file-opts))
       :both (do
-              (temp/print-log-to-stdout formatted-logs)
-              (apply temp/print-log-to-file formatted-logs (apply concat file-opts))))))
+              (print/->stdout formatted-logs)
+              (apply print/->file formatted-logs (apply concat file-opts))))))
 
 (defn filter
   "Filter log entries according to the requested mode.
@@ -116,10 +117,10 @@
 
    Returns: updated destination (vector or Bucket) with new log entry appended"
   ([sink message]
-   (temp/append-log-entry sink {:value message}))
+   (entry/append sink {:value message}))
   ([sink a b & rest]
-   (let [opts (temp/->log-opts a b rest)]
-     (temp/append-log-entry sink opts))))
+   (let [opts (entry/->log-opts a b rest)]
+     (entry/append sink opts))))
 
 (defn debug
   "Add a debug log entry to a vector or bucket sink.
@@ -127,9 +128,9 @@
    Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
-   (temp/log-with-level :debug sink message))
+   (entry/append-level :debug sink message))
   ([sink a b & rest]
-   (apply temp/log-with-level :debug sink a b rest)))
+   (apply entry/append-level :debug sink a b rest)))
 
 (defn info
   "Add an info log entry to a vector or bucket sink.
@@ -137,9 +138,9 @@
    Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
-   (temp/log-with-level :info sink message))
+   (entry/append-level :info sink message))
   ([sink a b & rest]
-   (apply temp/log-with-level :info sink a b rest)))
+   (apply entry/append-level :info sink a b rest)))
 
 (defn warning
   "Add a warning log entry to a vector or bucket sink.
@@ -147,9 +148,9 @@
    Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
-   (temp/log-with-level :warning sink message))
+   (entry/append-level :warning sink message))
   ([sink a b & rest]
-   (apply temp/log-with-level :warning sink a b rest)))
+   (apply entry/append-level :warning sink a b rest)))
 
 (defn error
   "Add an error log entry to a vector or bucket sink.
@@ -157,9 +158,9 @@
    Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
-   (temp/log-with-level :error sink message))
+   (entry/append-level :error sink message))
   ([sink a b & rest]
-   (apply temp/log-with-level :error sink a b rest)))
+   (apply entry/append-level :error sink a b rest)))
 
 (defn critical
   "Add a critical log entry to a vector or bucket sink.
@@ -167,6 +168,6 @@
    Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
-   (temp/log-with-level :critical sink message))
+   (entry/append-level :critical sink message))
   ([sink a b & rest]
-   (apply temp/log-with-level :critical sink a b rest)))
+   (apply entry/append-level :critical sink a b rest)))

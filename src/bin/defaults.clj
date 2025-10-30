@@ -1,3 +1,3 @@
 (ns bin.defaults)
 
-(def default-spacing 4)
+(def spacing 4)

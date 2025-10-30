@@ -25,6 +25,7 @@
         spaces (str/join (repeat indent " "))]
     (format "%s - %-8s:%s%s" timestamp log-level spaces value)))
 
+
 (def file-date
   (-> (DateTimeFormatter/ofPattern "yyMMddHHmmssSSS")
       (.withZone (ZoneId/systemDefault))))
@@ -33,3 +34,30 @@
   "Generate a timestamp string for filenames using the standard format."
   []
   (.format file-date (Instant/now)))
+
+(defn filename
+  "Generate a filename string using timestamp, name, and formatting options.
+
+   Invocation styles:
+   - Positional mode (odd arity): first argument is treated as the `:name`
+     and the remaining args must be keyword pairs.
+   - Keyword mode   (even arity): all arguments are interpreted as keyword
+     pairs, allowing `:name` to be omitted entirely.
+
+   Recognised keyword options:
+   - :name        -> base filename without extension
+   - :timestamp?  -> prepend timestamp when true (default false)
+   - :type        -> fallback base name when no name/timestamp supplied (default \"filename\")
+   - :ext         -> file extension without dot (default \"txt\")"
+  [& args]
+  (let [kw-args (if (odd? (count args))
+                  (apply hash-map :name (first args) (rest args))
+                  (apply hash-map args))
+        {:keys [name timestamp? type ext]
+         :or {timestamp? false type "file" ext "txt"}} kw-args
+        ts (when timestamp? (filename-timestamp))]
+    (cond
+      (and ts name) (str ts "-" name "." ext)
+      ts (str ts "." ext)
+      name (str name "." ext)
+      :else (str type "." ext))))

@@ -1,11 +1,11 @@
 (ns bucket.logging.make-entry-keywordized-test
   "Tests for logging make-entry function with keyword arguments."
-  (:require [bucket.log.temp :as log]
+  (:require [bucket.log.entry :as log-entry]
             [clojure.test :refer [deftest is testing]]))
 
 (deftest make-entry-keyword-value-only-test
   (testing "make-entry with only :value keyword"
-    (let [entry (log/make-entry :value "Test message")]
+    (let [entry (log-entry/make :value "Test message")]
       (is (= "Test message" (:value entry)))
       (is (= :info (:level entry)))
       (is (= 0 (:indent entry)))
@@ -15,7 +15,7 @@
 
 (deftest make-entry-keyword-value-and-level-test
   (testing "make-entry with :value and :level keywords"
-    (let [entry (log/make-entry :value "Warning message" :level :warning)]
+    (let [entry (log-entry/make :value "Warning message" :level :warning)]
       (is (= "Warning message" (:value entry)))
       (is (= :warning (:level entry)))
       (is (= 0 (:indent entry)))
@@ -24,7 +24,7 @@
 
 (deftest make-entry-keyword-value-and-indent-test
   (testing "make-entry with :value and :indent keywords"
-    (let [entry (log/make-entry :value "Indented message" :indent 3)]
+    (let [entry (log-entry/make :value "Indented message" :indent 3)]
       (is (= "Indented message" (:value entry)))
       (is (= :info (:level entry)))
       (is (= 3 (:indent entry)))
@@ -33,7 +33,7 @@
 
 (deftest make-entry-keyword-all-three-test
   (testing "make-entry with :value, :level, and :indent keywords"
-    (let [entry (log/make-entry :value "Full message" :level :error :indent 2)]
+    (let [entry (log-entry/make :value "Full message" :level :error :indent 2)]
       (is (= "Full message" (:value entry)))
       (is (= :error (:level entry)))
       (is (= 2 (:indent entry)))
@@ -42,8 +42,8 @@
 
 (deftest make-entry-keyword-different-order-test
   (testing "make-entry with keywords in different order"
-    (let [entry1 (log/make-entry :level :critical :value "Order test" :indent 1)
-          entry2 (log/make-entry :indent 1 :level :critical :value "Order test")]
+    (let [entry1 (log-entry/make :level :critical :value "Order test" :indent 1)
+          entry2 (log-entry/make :indent 1 :level :critical :value "Order test")]
       (is (= "Order test" (:value entry1)))
       (is (= :critical (:level entry1)))
       (is (= 1 (:indent entry1)))
@@ -57,7 +57,7 @@
 
 (deftest make-entry-positional-value-with-level-keyword-test
   (testing "make-entry with positional value followed by :level keyword"
-    (let [entry (log/make-entry "My message" :level :warning)]
+    (let [entry (log-entry/make "My message" :level :warning)]
       (is (= "My message" (:value entry)))
       (is (= :warning (:level entry)))
       (is (= 0 (:indent entry)))
@@ -66,7 +66,7 @@
 
 (deftest make-entry-positional-value-with-indent-keyword-test
   (testing "make-entry with positional value followed by :indent keyword"
-    (let [entry (log/make-entry "Simple message" :indent 3)]
+    (let [entry (log-entry/make "Simple message" :indent 3)]
       (is (= "Simple message" (:value entry)))
       (is (= :info (:level entry)))
       (is (= 3 (:indent entry)))
@@ -75,7 +75,7 @@
 
 (deftest make-entry-positional-value-with-both-keywords-test
   (testing "make-entry with positional value followed by :level and :indent keywords"
-    (let [entry (log/make-entry "Full message" :level :error :indent 2)]
+    (let [entry (log-entry/make "Full message" :level :error :indent 2)]
       (is (= "Full message" (:value entry)))
       (is (= :error (:level entry)))
       (is (= 2 (:indent entry)))

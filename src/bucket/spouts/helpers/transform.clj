@@ -51,12 +51,12 @@
 
 (defn write-serialized-to-file
   "Write serialized bucket to file."
-  [serialized format & {:keys [dir name timestamp]
-                        :or {timestamp true}}]
+  [serialized format & {:keys [dir name timestamp?]
+                        :or {timestamp? true}}]
   (let [dir-path (or dir ".")
         dir-file (io/file dir-path)]
     (.mkdirs dir-file)
-    (let [ts (when timestamp (fmt/filename-timestamp))
+    (let [ts (when timestamp? (fmt/filename-timestamp))
           extension (case format
                       :edn ".edn"
                       :json ".json")
