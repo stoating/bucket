@@ -10,12 +10,12 @@
 
    Args:
    - f: function to wrap (expects opts map containing optional :logs)
-   - :check-pass (optional keyword arg) if true, redact password-like values
+   - :check-secrets (optional keyword arg) if true, redact password-like values
      from logged arguments (default true)
 
    Returns: wrapped function that logs arguments and delegates to f."
-  [f & {:keys [check-pass]
-        :or {check-pass true}}]
+  [f & {:keys [check-secrets]
+        :or {check-secrets true}}]
   (let [wrapped (fn [opts]
                   (let [logs (:logs opts [])
                         last-entry (peek logs)
@@ -27,7 +27,7 @@
                         args-logs (log/log logs
                                            args-text
                                            :indent base-indent
-                                           :check-pass check-pass
+                                           :check-secrets check-secrets
                                            :indent-next base-indent)
                         response (f (assoc opts :logs args-logs))]
                     (if (and (map? response)

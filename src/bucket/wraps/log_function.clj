@@ -14,7 +14,7 @@
    - :spacing (optional keyword arg) controls indentation width (default 4)
    - :log-args? (optional keyword arg) when true delegates to log-args
      (default false)
-   - :args-check-pass (optional keyword arg) controls password checking when
+   - :args-check-secrets (optional keyword arg) controls password checking when
      logging args (default true)
 
    Returns: wrapped function with entry/exit logging."

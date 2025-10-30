@@ -2,6 +2,7 @@
   "High-level spout helpers intended for end-user consumption."
   (:require [bucket.error :as error]
             [bucket.log :as log]
+            [bucket.meta :as meta]
             [bucket.spouts.helpers.chain :as chain]
             [bucket.spouts.helpers.extract :as extract]
             [clj-ulid :as ulid]))
@@ -27,7 +28,7 @@
                   require-result false}}]
   (let [name (:name bucket)
         log-formatter (extract/output-formatter log-out log/print-logs {:out log-out :dir out-dir :name name})
-        meta-formatter (extract/output-formatter meta-out log/print-meta {:out meta-out :dir out-dir :name name})
+        meta-formatter (extract/output-formatter meta-out meta/print-meta {:out meta-out :dir out-dir :name name})
         error-formatter (extract/output-formatter error-out error/handle-error {:out error-out :dir out-dir :name name :exit exit})]
     (extract/spill-formatted bucket
                              :log-formatter log-formatter

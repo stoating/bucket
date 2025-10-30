@@ -273,7 +273,7 @@
                            (assoc log2 :value "Line 2" :level :info)]}]
       (is (= expected (bucket-view resp))))))
 
-(deftest redirect-stdout-check-pass-false
+(deftest redirect-stdout-check-secrets-false
   (testing "captured output does not trigger password redaction"
     (let [f (wrap/redirect-stdout
               (fn [{:keys [logs]}]

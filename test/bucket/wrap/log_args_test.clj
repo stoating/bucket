@@ -27,7 +27,7 @@
 
 (deftest log-args-no-redaction-when-disabled
   (testing "can disable password redaction"
-    (let [f (wrap/log-args demo-fn :check-pass false)
+    (let [f (wrap/log-args demo-fn :check-secrets false)
           resp (f {:password "secret"})
           [args-log] (:logs resp)]
       (is (= "args: {:password \"secret\"}" (:value args-log))))))

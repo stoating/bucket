@@ -2,7 +2,7 @@
   "Error handling helpers for Bucket processing.
 
    Error format: [exception-or-nil stacktrace-string-or-nil]"
-  (:require [bin.format :as fmt]
+  (:require [bin.format :as format]
             [clojure.stacktrace :as st]
             [clojure.java.io :as io]))
 
@@ -43,7 +43,7 @@
 
    Returns: filename string with .log extension"
   [name timestamp]
-  (let [ts (when timestamp (fmt/filename-timestamp))]
+  (let [ts (when timestamp (format/filename-timestamp))]
     (cond
       (and ts name) (str ts "-" name ".log")
       ts (str ts ".log")

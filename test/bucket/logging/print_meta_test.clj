@@ -1,6 +1,6 @@
 (ns bucket.logging.print-meta-test
   "Tests for logging print-meta function."
-  (:require [bucket.log :as log]
+  (:require [bucket.meta :as meta]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [test-helpers :as th]))
@@ -11,7 +11,7 @@
   (testing "metadata with :stdout output"
     (let [meta-data {:user "alice" :timestamp 1234567890}
           out-str (with-out-str
-                    (log/print-meta meta-data :out :stdout :name "test-bucket"))]
+                    (meta/print-meta meta-data :out :stdout :name "test-bucket"))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":user"))
       (is (.contains out-str "alice"))
@@ -26,7 +26,7 @@
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
           out-str (with-out-str
-                    (log/print-meta meta-data :out :file :name bucket-name :dir temp-dir))]
+                    (meta/print-meta meta-data :out :file :name bucket-name :dir temp-dir))]
       (is (.contains out-str "Metadata written to:"))
       (is (.contains out-str bucket-name))
       (is (.contains out-str ".edn"))
@@ -41,7 +41,7 @@
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
           out-str (with-out-str
-                    (log/print-meta meta-data :out :both :name bucket-name :dir temp-dir))]
+                    (meta/print-meta meta-data :out :both :name bucket-name :dir temp-dir))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":env"))
       (is (.contains out-str "prod"))
@@ -57,7 +57,7 @@
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
           out-str (with-out-str
-                    (log/print-meta meta-data :out :none :name bucket-name :dir temp-dir))]
+                    (meta/print-meta meta-data :out :none :name bucket-name :dir temp-dir))]
       (is (= "" out-str))
       (is (zero? (count (.listFiles temp-dir-file)))
           "print-meta produces no output when :none is specified"))))
@@ -69,7 +69,7 @@
                      :tags ["important" "monitored"]
                      :config {:retries 3 :timeout 5000}}
           out-str (with-out-str
-                    (log/print-meta meta-data :out :stdout :name "complex-bucket"))]
+                    (meta/print-meta meta-data :out :stdout :name "complex-bucket"))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":user"))
       (is (.contains out-str ":name"))
@@ -88,7 +88,7 @@
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
           out-str (with-out-str
-                    (log/print-meta meta-data :out :file :name custom-name :dir temp-dir))]
+                    (meta/print-meta meta-data :out :file :name custom-name :dir temp-dir))]
       (is (.contains out-str "Metadata written to:"))
       (is (.contains out-str (str custom-name ".edn")))
       (is (= 1 (count (.listFiles temp-dir-file))))

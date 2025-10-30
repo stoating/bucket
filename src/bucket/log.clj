@@ -7,7 +7,10 @@
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
   (:refer-clojure :exclude [filter])
-  (:require [bucket.log.temp :as temp])
+  (:require [bin.format :as format]
+            [bucket.log.protocol :as protocol]
+            [bucket.log.temp :as temp]
+            [bucket.log.filter :as filter])
   (:import [java.time Instant]))
 
 (defn print-logs
@@ -35,8 +38,8 @@
    Each log entry is printed with appropriate formatting."
   [sink & {:keys [out dir name timestamp]
            :or {out :both}}]
-  (let [logs (temp/-current-logs sink)
-        formatted-logs (map temp/format-log-message logs)
+  (let [logs (protocol/-current-logs sink)
+        formatted-logs (map format/log-text logs)
         file-opts (cond-> {}
                     dir (assoc :dir dir)
                     name (assoc :name name)
@@ -48,41 +51,6 @@
       :both (do
               (temp/print-log-to-stdout formatted-logs)
               (apply temp/print-log-to-file formatted-logs (apply concat file-opts))))))
-
-(defn print-meta
-  "Print bucket metadata according to output mode.
-
-   Args:
-   - meta: metadata map from bucket
-   - out: output mode - :none, :stdout, :file, or :both (default :both)
-   - dir: optional output directory for :file or :both modes (default: ./meta)
-   - name: optional base filename (without extension) for :file or :both modes
-   - timestamp: boolean, whether to prepend timestamp to filename (default: true)
-
-   Output modes:
-   - :none   - Don't output metadata anywhere
-   - :stdout - Print metadata to stdout only
-   - :file   - Write metadata to .edn file only
-   - :both   - Print to stdout AND write to .edn file
-
-   Filename generation:
-   - If both name and timestamp: <timestamp>-<n>.edn
-   - If only timestamp: <timestamp>.edn
-   - If only name: <n>.edn
-   - If neither: meta.edn"
-  [meta & {:keys [out dir name timestamp]
-           :or {out :both}}]
-  (let [file-opts (cond-> {}
-                    dir (assoc :dir dir)
-                    name (assoc :name name)
-                    (some? timestamp) (assoc :timestamp timestamp))]
-    (case out
-      :none nil
-      :stdout (temp/print-meta-to-stdout meta)
-      :file (apply temp/print-meta-to-file meta (apply concat file-opts))
-      :both (do
-              (temp/print-meta-to-stdout meta)
-              (apply temp/print-meta-to-file meta (apply concat file-opts))))))
 
 (defn filter
   "Filter log entries according to the requested mode.
@@ -112,14 +80,14 @@
                    {:type :lte :value :debug})
         type (or type (:type defaults))
         value (or value (:value defaults))
-        logs (temp/-current-logs sink)
+        logs (protocol/-current-logs sink)
         filtered (case mode
-                   :level (temp/filter-level logs type value)
-                   :indent (temp/filter-indent logs type value)
-                   :time (temp/filter-time logs type value)
-                   :value (temp/filter-value logs type value)
+                   :level (filter/level logs type value)
+                   :indent (filter/indent logs type value)
+                   :time (filter/time logs type value)
+                   :value (filter/value logs type value)
                    logs)]
-    (temp/-with-logs sink filtered)))
+    (protocol/-with-logs sink filtered)))
 
 (defn log
   "Add a log entry to a destination.
@@ -136,15 +104,15 @@
    - message: log message string (positional or :value keyword)
    - :level - log level keyword (default :info)
    - :indent - indentation level (default: same as last entry or 0)
-   - :check-pass - whether to check for password-like content (default false)
+   - :check-secrets - whether to check for password-like content (default false)
 
    Examples:
-     (log logs \"Hello\")                                    ; positional message only
-     (log logs \"Hello\" :level :warning)                    ; positional message + keyword args
-     (log logs \"Hello\" :level :error :indent 2)            ; positional message + multiple keywords
-     (log logs :value \"Hello\")                             ; all keyword args
-     (log logs :value \"Hello\" :level :warning :indent 2)   ; all keyword args
-     (log logs :value \"password123\" :check-pass true)      ; with password check
+     (log logs \"Hello\")                                  ; positional message only
+     (log logs \"Hello\" :level :warning)                  ; positional message + keyword args
+     (log logs \"Hello\" :level :error :indent 2)          ; positional message + multiple keywords
+     (log logs :value \"Hello\")                           ; all keyword args
+     (log logs :value \"Hello\" :level :warning :indent 2) ; all keyword args
+     (log logs :value \"password123\" :check-secrets true)  ; with password check
 
    Returns: updated destination (vector or Bucket) with new log entry appended"
   ([sink message]
@@ -156,7 +124,7 @@
 (defn debug
   "Add a debug log entry to a vector or bucket sink.
 
-   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
    (temp/log-with-level :debug sink message))
@@ -166,7 +134,7 @@
 (defn info
   "Add an info log entry to a vector or bucket sink.
 
-   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
    (temp/log-with-level :info sink message))
@@ -176,7 +144,7 @@
 (defn warning
   "Add a warning log entry to a vector or bucket sink.
 
-   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
    (temp/log-with-level :warning sink message))
@@ -186,7 +154,7 @@
 (defn error
   "Add an error log entry to a vector or bucket sink.
 
-   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
    (temp/log-with-level :error sink message))
@@ -196,7 +164,7 @@
 (defn critical
   "Add a critical log entry to a vector or bucket sink.
 
-   Accepts the same keyword options as `log`, including :indent, :check-pass,
+   Accepts the same keyword options as `log`, including :indent, :check-secrets,
    and :indent-next."
   ([sink message]
    (temp/log-with-level :critical sink message))

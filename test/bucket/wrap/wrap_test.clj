@@ -169,7 +169,7 @@
 
 (deftest wrap-threaded-indent
   (testing "threaded helper emits logs with consistent indentation"
-    (let [wrapped (wrap/wrap wrap-threaded-nested {:args-check-pass "false"
+    (let [wrapped (wrap/wrap wrap-threaded-nested {:args-check-secrets "false"
                                                    :redirect-mode :depth-aware})
           resp (wrapped (bucket/grab 5 :logs []))
           values (map :value (:logs resp))
