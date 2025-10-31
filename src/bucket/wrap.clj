@@ -6,6 +6,7 @@
    - Emit entry/exit traces with controllable indentation
    - Capture stdout output and merge it back into structured logs"
   (:require [bin.defaults :as default]
+            [bucket :as bucket]
             [bucket.wraps.redirect-stdout :refer [redirect-stdout]]
             [bucket.wraps.catch-error :refer [catch-error]]
             [bucket.wraps.log-function :refer [log-function]]
@@ -47,3 +48,50 @@
                        :mode redirect-mode)
      log-args? (log-args :check-secrets args-check-secrets)
      log-function? (log-function :spacing spacing))))
+
+(defn wrap+
+  "Like `wrap`, but allows the caller to request bucketization of plain functions.
+
+   Options:
+   - :bucketize (boolean, default false) - when true, `f` is passed through
+     `bucket/bucketize` before delegating to `wrap`. All other options are
+     forwarded to `wrap` unchanged.
+
+   Examples:
+   ```clojure
+   (wrap+ work-fn)                        ; identical to (wrap work-fn)
+   (wrap+ inc {:bucketize true})          ; bucketize plain inc before wrapping
+   (wrap+ inc {:bucketize true
+              :log-args? false
+              :log-function? false})
+  ```"
+  ([f]
+   (wrap+ f nil {}))
+  ([f opts]
+   (if (map? opts)
+     (wrap+ f nil opts)
+     (wrap+ f opts {})))
+  ([f input {:keys [bucketize bucket]
+             :or {bucketize false
+                  bucket {}}
+             :as opts}]
+   (let [wrap-opts (dissoc opts :bucketize :bucket)
+         f* (if bucketize
+              (bucket/bucketize f)
+              f)
+         wrapped (wrap f* wrap-opts)
+         bucket-map (or bucket {})
+         base-args (into [:logs  (or (:logs bucket-map) [])
+                          :error (or (:error bucket-map) [nil nil])
+                          :meta  (or (:meta bucket-map) {})]
+                         (when (contains? bucket-map :name)
+                           [:name (:name bucket-map)]))]
+     (cond
+       (some? input)
+       (wrapped (apply bucket/grab (into [:value input] base-args)))
+
+       (seq bucket-map)
+       (apply bucket/grab (into [:value wrapped] base-args))
+
+       :else
+       wrapped))))

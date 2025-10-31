@@ -123,10 +123,47 @@
       (is (= "<-- work" (:value exit)))
       (is (= 2 (count (:logs resp)))))))
 
+(deftest wrap+-bucketizes-and-wraps
+  (testing "wrap+ can bucketize plain functions on demand"
+    (let [wrapped (wrap/wrap+ inc {:bucketize true})
+          resp (wrapped (bucket/grab 5))]
+      (is (= 6 (:value resp)))
+      (is (= [nil nil] (:error resp))))))
+
+(deftest wrap+-grab-option
+  (testing "wrap+ grabs result when bucket opts provided"
+    (let [resp (wrap/wrap+ inc 4 {:bucketize true
+                                  :bucket {:meta {:job "plumber"}
+                                           :name "my-bucket"}})]
+      (is (= 5 (:value resp)))
+      (is (= {:job "plumber"} (:meta resp)))
+      (is (= "my-bucket" (:name resp)))
+      (is (= [nil nil] (:error resp))))))
+
+(deftest wrap+-grab-option-2
+  (testing "wrap+ grabs result when bucket opts provided"
+    (let [resp (wrap/wrap+ inc 4 {:bucketize true})]
+      (is (= 5 (:value resp)))
+      (is (= [nil nil] (:error resp))))))
+
+(deftest wrap+-grab-option-3
+  (testing "wrap+ grabs result when bucket opts provided"
+    (let [resp (wrap/wrap+ inc {:bucketize true
+                                :bucket {:meta {:job "plumber"}
+                                         :name "my-bucket"}})]
+      (is (fn? (:value resp)))
+      (is (= {:job "plumber"} (:meta resp)))
+      (is (= "my-bucket" (:name resp)))
+      (is (= [nil nil] (:error resp)))
+      (let [wrapped-inc (:value resp)
+            result (wrapped-inc (bucket/grab 4))]
+        (is (= 5 (:value result)))
+        (is (= [nil nil] (:error result)))))))
+
 (deftest wrap-nested-default-stack-indent
   (testing "nested stdout uses depth-driven indentation by default"
     (let [wrapped (wrap/wrap wrap-plain-nested {:redirect-mode :depth-aware})
-          resp (wrapped (bucket/grab 5 :logs []))
+          resp (wrapped (bucket/grab 5))
           logs (:logs resp)
           values (map :value logs)
           indents (map :indent logs)]
@@ -173,7 +210,7 @@
   (testing "threaded helper emits logs with consistent indentation"
     (let [wrapped (wrap/wrap wrap-threaded-nested {:args-check-secrets false
                                                    :redirect-mode :depth-aware})
-          resp (wrapped (bucket/grab 5 :logs []))
+          resp (wrapped (bucket/grab 5))
           values (map :value (:logs resp))
           indents (map :indent (:logs resp))]
       (is (= 255 (:value resp)))
@@ -232,7 +269,7 @@
                             bucket)))
                       {:name 'outer-worker})
           wrapped-outer (wrap/wrap raw-outer {:redirect-mode :depth-aware})
-          response (-> (wrapped-outer {:value 5 :logs []})
+          response (-> (wrapped-outer {:value 5})
                        (update :logs log/log "post-outer-sentinel"))
           [outer-entry outer-args begin finish
            middle-entry middle-args

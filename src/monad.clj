@@ -213,9 +213,9 @@
 
    Returns: function that operates on Bucket values
 
-   Examples:
-   (def lifted-inc (lift inc))
-   (lifted-inc (pure 5))         ; => Bucket with value 6"
+  Examples:
+  (def lifted-inc (lift inc))
+  (lifted-inc (pure 5))         ; => Bucket with value 6"
   {:malli/schema [:=> [:cat ifn?] ifn?]}
   [f]
   (partial fmap f))
