@@ -146,6 +146,12 @@
       (is (= 5 (:value resp)))
       (is (= [nil nil] (:error resp))))))
 
+(deftest wrap+-grab-option-2-1
+  (testing "wrap+ grabs result when bucket opts provided"
+    (let [resp (wrap/wrap+ inc {:bucketize true
+                                :bucket {}})]
+      (is (fn? (:value resp))))))
+
 (deftest wrap+-grab-option-3
   (testing "wrap+ grabs result when bucket opts provided"
     (let [resp (wrap/wrap+ inc {:bucketize true

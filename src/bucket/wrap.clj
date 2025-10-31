@@ -81,16 +81,21 @@
               f)
          wrapped (wrap f* wrap-opts)
          bucket-map (or bucket {})
-         base-args (into [:logs  (or (:logs bucket-map) [])
+         bucket-provided? (contains? opts :bucket)
+         bucket-has-value? (contains? bucket-map :value)
+         base-args (into [:logs (or (:logs bucket-map) [])
                           :error (or (:error bucket-map) [nil nil])
-                          :meta  (or (:meta bucket-map) {})]
+                          :meta (or (:meta bucket-map) {})]
                          (when (contains? bucket-map :name)
                            [:name (:name bucket-map)]))]
      (cond
-       (some? input)
-       (wrapped (apply bucket/grab (into [:value input] base-args)))
+       (or (some? input) bucket-has-value?)
+       (let [value (if bucket-has-value?
+                     (:value bucket-map)
+                     input)]
+         (wrapped (apply bucket/grab (into [:value value] base-args))))
 
-       (seq bucket-map)
+       bucket-provided?
        (apply bucket/grab (into [:value wrapped] base-args))
 
        :else
