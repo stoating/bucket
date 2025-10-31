@@ -133,25 +133,16 @@
       (is (= 50 (:value resp)))
       (is (= [nil nil] (:error resp)))
       (is (= "--> wrap-plain-nested" (first values)))
-      (is (= "args:" (second values)))
-      (let [entries (map vector values indents)
-            arg-entries (->> entries (drop 2) (take-while #(str/starts-with? (first %) "arg:")))
-            remaining (drop (+ 2 (count arg-entries)) entries)]
-        (is (seq arg-entries))
-        (is (every? #(= 4 (second %)) arg-entries))
-        (is (some #(= "arg: :value, value: 5" (first %)) arg-entries))
-        (is (= ["Level 1: Begin nested processing"
-                "Level 2: Starting with 5"
-                "Level 3: Processing 5"
-                "Level 2: Got value 15"
-                "Level 1: Intermediate value is 25"
-                "Level 1: Final value is 50"]
-               (map first (take 6 remaining))))
-        (is (= [4 8 12 8 4 4]
-               (map second (take 6 remaining))))
-        (let [exit-entry (first (drop 6 remaining))]
-          (is (= "<-- wrap-plain-nested" (first exit-entry)))
-          (is (= 4 (:indent (last logs)))))))))
+      (is (str/starts-with? (second values) "args: "))
+      (is (= ["Level 1: Begin nested processing"
+              "Level 2: Starting with 5"
+              "Level 3: Processing 5"
+              "Level 2: Got value 15"
+              "Level 1: Intermediate value is 25"
+              "Level 1: Final value is 50"]
+             (subvec (vec values) 2 8)))
+      (is (= "<-- wrap-plain-nested" (last values)))
+      (is (= [4 4 4 8 12 8 4 4 4] indents)))))
 
 (deftest wrap-nested-stack-exclude-flattened
   (testing "stack exclusions flatten nested stdout indentation"
@@ -161,28 +152,22 @@
           wrapped (wrap/wrap wrap-plain-nested stack-opts)
           resp (wrapped (bucket/grab 5))
           simplify (fn [log] (select-keys log [:indent :value :indent-next]))
-          simplified (mapv simplify (:logs resp))
-          entries simplified
-          arg-entries (->> entries (drop 2) (take-while #(str/starts-with? (:value %) "arg:")))
-          remaining (drop (+ 2 (count arg-entries)) entries)]
-      (is (= 50 (:value resp)))
-      (is (= [nil nil] (:error resp)))
-      (is (= {:indent 4 :value "--> wrap-plain-nested" :indent-next 4}
-             (first simplified)))
-      (is (= "args:" (:value (second simplified))))
-      (is (seq arg-entries))
-      (is (every? #(= 4 (:indent %)) arg-entries))
-      (is (some #(= "arg: :value, value: 5" (:value %)) arg-entries))
-      (is (= ["Level 1: Begin nested processing"
-              "Level 2: Starting with 5"
-              "Level 3: Processing 5"
-              "Level 2: Got value 15"
-              "Level 1: Intermediate value is 25"
-              "Level 1: Final value is 50"]
-             (map :value (take 6 remaining))))
-      (is (every? #(= 4 (:indent %)) (take 6 remaining)))
-      (let [exit (first (drop 6 remaining))]
-        (is (= {:indent 4 :value "<-- wrap-plain-nested" :indent-next 0} exit))))))
+          actual (-> resp (assoc :logs (mapv simplify (:logs resp))))]
+      (is (= {:id (:id resp)
+              :name (:name resp)
+              :meta (:meta resp)
+              :value 50
+              :error [nil nil]
+              :logs [{:indent 4 :value "--> wrap-plain-nested" :indent-next 4}
+                     {:indent 4 :value (:value (second (:logs resp))) :indent-next 4}
+                     {:indent 4 :value "Level 1: Begin nested processing"}
+                     {:indent 4 :value "Level 2: Starting with 5"}
+                     {:indent 4 :value "Level 3: Processing 5"}
+                     {:indent 4 :value "Level 2: Got value 15"}
+                     {:indent 4 :value "Level 1: Intermediate value is 25"}
+                     {:indent 4 :value "Level 1: Final value is 50"}
+                     {:indent 4 :value "<-- wrap-plain-nested" :indent-next 0}]}
+             actual)))))
 
 (deftest wrap-threaded-indent
   (testing "threaded helper emits logs with consistent indentation"
@@ -194,26 +179,18 @@
       (is (= 255 (:value resp)))
       (is (= [nil nil] (:error resp)))
       (is (= "--> wrap-threaded-nested" (first values)))
-      (is (= "args:" (second values)))
-      (let [entries (map vector values indents)
-            arg-entries (->> entries (drop 2) (take-while #(str/starts-with? (first %) "arg:")))
-            remaining (drop (+ 2 (count arg-entries)) entries)]
-        (is (seq arg-entries))
-        (is (some #(= "arg: :value, value: 5" (first %)) arg-entries))
-        (is (= ["Thread Level 1: start 5"
-                "Level 2: Starting with 5"
-                "Level 3: Processing 5"
-                "Level 2: Got value 15"
-                "Level 2: Starting with 25"
-                "Level 3: Processing 25"
-                "Level 2: Got value 75"
-                "Thread Level 1: after helper 85"]
-               (map first (take 8 remaining))))
-        (is (= [4 8 12 8 8 12 8 4]
-               (map second (take 8 remaining))))
-        (let [exit-entry (first (drop 8 remaining))]
-          (is (= "<-- wrap-threaded-nested" (first exit-entry)))
-          (is (= 4 (:indent (last (:logs resp))))))))))
+      (is (str/starts-with? (second values) "args: "))
+      (is (= ["Thread Level 1: start 5"
+              "Level 2: Starting with 5"
+              "Level 3: Processing 5"
+              "Level 2: Got value 15"
+              "Level 2: Starting with 25"
+              "Level 3: Processing 25"
+              "Level 2: Got value 75"
+              "Thread Level 1: after helper 85"]
+             (subvec (vec values) 2 10)))
+      (is (= "<-- wrap-threaded-nested" (last values)))
+      (is (= [4 4 4 8 12 8 8 12 8 4 4] indents)))))
 
 (deftest wrap-nested-call-structure
   (testing "wrap captures nested calls with argument logging and captured output"
@@ -257,10 +234,10 @@
           wrapped-outer (wrap/wrap raw-outer {:redirect-mode :depth-aware})
           response (-> (wrapped-outer {:value 5 :logs []})
                        (update :logs log/log "post-outer-sentinel"))
-          [outer-entry outer-args-header outer-arg begin finish
-           middle-entry middle-args-header middle-arg
+          [outer-entry outer-args begin finish
+           middle-entry middle-args
            level2-start level2-combine
-           inner-entry inner-args-header inner-arg
+           inner-entry inner-args
            level3 inner-exit middle-exit outer-exit sentinel] (:logs response)
           expected {:id (:id response)
                     :name (:name response)
@@ -274,18 +251,15 @@
                                              :value 33}}}
                     :error [nil nil]
                     :logs [{:indent 4 :time (:time outer-entry) :level :info :value "--> outer-worker" :indent-next 4}
-                           {:indent 4 :time (:time outer-args-header) :level :info :value "args:"}
-                           {:indent 4 :time (:time outer-arg) :level :info :value "arg: :value, value: 5" :indent-next 4}
+                           {:indent 4 :time (:time outer-args) :level :info :value "args: {:value 5}" :indent-next 4}
                            {:indent 4 :time (:time begin) :level :info :value "Level 1: begin 5"}
                            {:indent 4 :time (:time finish) :level :info :value "Level 1: finish :middle"}
                            {:indent 8 :time (:time middle-entry) :level :info :value "--> middle-worker" :indent-next 8}
-                           {:indent 8 :time (:time middle-args-header) :level :info :value "args:"}
-                           {:indent 8 :time (:time middle-arg) :level :info :value "arg: :value, value: 10" :indent-next 8}
+                           {:indent 8 :time (:time middle-args) :level :info :value "args: {:value 10}" :indent-next 8}
                            {:indent 8 :time (:time level2-start) :level :info :value "Level 2: start 10"}
                            {:indent 8 :time (:time level2-combine) :level :info :value "Level 2: combining 33"}
                            {:indent 12 :time (:time inner-entry) :level :info :value "--> inner-worker" :indent-next 12}
-                           {:indent 12 :time (:time inner-args-header) :level :info :value "args:"}
-                           {:indent 12 :time (:time inner-arg) :level :info :value "arg: :value, value: 11" :indent-next 12}
+                           {:indent 12 :time (:time inner-args) :level :info :value "args: {:value 11}" :indent-next 12}
                            {:indent 12 :time (:time level3) :level :info :value "Level 3: processing 11"}
                            {:indent 12 :time (:time inner-exit) :level :info :value "<-- inner-worker" :indent-next 8}
                            {:indent 8 :time (:time middle-exit) :level :info :value "<-- middle-worker" :indent-next 4}
