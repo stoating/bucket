@@ -13,21 +13,23 @@
   (testing "arguments logged before function execution"
     (let [f (wrap/log-args demo-fn)
           resp (f {:foo "bar"})
-          [args-log] (:logs resp)]
+          [header arg-log] (:logs resp)]
       (is (= :ok (:value resp)))
-      (is (= "args: {:foo \"bar\"}" (:value args-log)))
-      (is (= 0 (:indent args-log))))))
+      (is (= "args:" (:value header)))
+      (is (= "arg: :foo, value: \"bar\"" (:value arg-log)))
+      (is (= 0 (:indent header)))
+      (is (= 0 (:indent arg-log))))))
 
 (deftest log-args-redacts-passwords
   (testing "redacts password-like values by default"
     (let [f (wrap/log-args demo-fn)
           resp (f {:password "secret"})
-          [args-log] (:logs resp)]
-      (is (= "* log redacted *" (:value args-log))))))
+          [_ arg-log] (:logs resp)]
+      (is (= "* log redacted *" (:value arg-log))))))
 
 (deftest log-args-no-redaction-when-disabled
   (testing "can disable password redaction"
     (let [f (wrap/log-args demo-fn :check-secrets false)
           resp (f {:password "secret"})
-          [args-log] (:logs resp)]
-      (is (= "args: {:password \"secret\"}" (:value args-log))))))
+          [_ arg-log] (:logs resp)]
+      (is (= "arg: :password, value: \"secret\"" (:value arg-log))))))

@@ -55,8 +55,8 @@
                          "* log redacted *"
                          value)
         base-entry (make :value actual-message
-                               :level (or level :info)
-                               :indent actual-indent)
+                         :level (or level :info)
+                         :indent actual-indent)
         entry (cond-> base-entry
                 (some? indent-next) (assoc :indent-next indent-next))
         updated-logs (conj logs entry)]

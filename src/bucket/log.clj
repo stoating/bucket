@@ -113,7 +113,7 @@
      (log logs \"Hello\" :level :error :indent 2)          ; positional message + multiple keywords
      (log logs :value \"Hello\")                           ; all keyword args
      (log logs :value \"Hello\" :level :warning :indent 2) ; all keyword args
-     (log logs :value \"password123\" :check-secrets true)  ; with password check
+     (log logs :value \"password123\" :check-secrets true) ; with password check
 
    Returns: updated destination (vector or Bucket) with new log entry appended"
   ([sink message]
