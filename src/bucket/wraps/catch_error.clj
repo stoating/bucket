@@ -1,6 +1,6 @@
 (ns bucket.wraps.catch-error
   (:require [bucket :as bucket]
-            [bucket.error :as error]))
+            [bucket.error.entry :as error-entry]))
 
 (defn catch-error
   "Wrap a function to catch exceptions and turn them into response errors.
@@ -18,7 +18,7 @@
                   (try
                     (f opts)
                     (catch Exception e
-                      (let [err (error/make-error e)
+                      (let [err (error-entry/make e)
                             logs (:logs opts [])]
                         (bucket/grab nil :logs logs :error err)))))]
     (with-meta wrapped (meta f))))

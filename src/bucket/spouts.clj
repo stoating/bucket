@@ -29,7 +29,7 @@
   (let [name (:name bucket)
         log-formatter (extract/output-formatter log-out log/print {:out log-out :dir out-dir :name name})
         meta-formatter (extract/output-formatter meta-out meta/print {:out meta-out :dir out-dir :name name})
-        error-formatter (extract/output-formatter error-out error/handle-error {:out error-out :dir out-dir :name name :exit exit})]
+        error-formatter (extract/output-formatter error-out error/handle {:out error-out :dir out-dir :name name :exit exit})]
     (extract/spill-formatted bucket
                              :log-formatter log-formatter
                              :meta-formatter meta-formatter

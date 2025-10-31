@@ -9,6 +9,20 @@
   (-> (DateTimeFormatter/ofPattern "EEE MMM dd HH:mm:ss yyyy")
       (.withZone (ZoneId/systemDefault))))
 
+(defn error-text
+  "Format an error tuple as a string for logging.
+
+   Args:
+   - error: [exception-or-nil stacktrace-or-nil]
+
+   Returns: formatted error string or nil"
+  [error]
+  (let [[err stacktrace] error]
+    (when err
+      (str "Error: " (ex-message err)
+           (when stacktrace
+             (str "\n" stacktrace))))))
+
 (defn log-text
   "Format a log entry for output.
 
@@ -24,7 +38,6 @@
         log-level (str/upper-case (name level))
         spaces (str/join (repeat indent " "))]
     (format "%s - %-8s:%s%s" timestamp log-level spaces value)))
-
 
 (def file-date
   (-> (DateTimeFormatter/ofPattern "yyMMddHHmmssSSS")
