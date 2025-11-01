@@ -1,6 +1,6 @@
 (ns bucket.wrap.catch-error-test
   (:require [bucket :as bucket]
-            [bucket.wraps.catch-error :as wrap]
+            [bucket.wraps.wrapper.catch-error :as wrap]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))
 

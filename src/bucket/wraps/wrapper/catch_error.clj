@@ -1,4 +1,4 @@
-(ns bucket.wraps.catch-error
+(ns bucket.wraps.wrapper.catch-error
   (:require [bucket :as bucket]
             [bucket.error.entry :as error-entry]))
 

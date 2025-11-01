@@ -1,6 +1,6 @@
 (ns bucket.wrap.log-args-test
   (:require [bucket :as bucket]
-            [bucket.wraps.log-args :as wrap]
+            [bucket.wraps.wrapper.log-args :as wrap]
             [clojure.test :refer [deftest is testing]]))
 
 (def demo-fn

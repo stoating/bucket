@@ -1,4 +1,4 @@
-(ns bucket.wraps.log-function
+(ns bucket.wraps.wrapper.log-function
   (:require [bin.defaults :as default]
             [bucket.log :as log]))
 

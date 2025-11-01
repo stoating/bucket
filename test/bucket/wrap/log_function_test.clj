@@ -1,6 +1,6 @@
 (ns bucket.wrap.log-function-test
   (:require [bucket :as bucket]
-            [bucket.wraps.log-function :as wrap]
+            [bucket.wraps.wrapper.log-function :as wrap]
             [clojure.test :refer [deftest is testing]])
   (:import [java.time Instant]))
 

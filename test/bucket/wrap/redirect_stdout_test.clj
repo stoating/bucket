@@ -1,7 +1,7 @@
 (ns bucket.wrap.redirect-stdout-test
   (:require [bucket :as bucket]
             [bucket.log :as log]
-            [bucket.wraps.redirect-stdout :as wrap]
+            [bucket.wraps.wrapper.redirect-stdout :as wrap]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 

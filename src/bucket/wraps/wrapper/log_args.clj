@@ -1,4 +1,4 @@
-(ns bucket.wraps.log-args
+(ns bucket.wraps.wrapper.log-args
   (:require [bucket.log :as log]))
 
 (defn log-args

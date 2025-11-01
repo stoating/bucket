@@ -1,4 +1,4 @@
-(ns bucket.wraps.redirect-stdout
+(ns bucket.wraps.wrapper.redirect-stdout
   (:require [bin.defaults :as default]
             [bucket.log :as log]
             [clojure.math :as math]

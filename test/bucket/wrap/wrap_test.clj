@@ -123,16 +123,16 @@
       (is (= "<-- work" (:value exit)))
       (is (= 2 (count (:logs resp)))))))
 
-(deftest wrap+-bucketizes-and-wraps
-  (testing "wrap+ can bucketize plain functions on demand"
-    (let [wrapped (wrap/wrap+ inc {:bucketize true})
+(deftest wrap-bucketizes-and-wraps
+  (testing "wrap can bucketize plain functions on demand"
+    (let [wrapped (wrap/wrap inc {:bucketize true})
           resp (wrapped (bucket/grab 5))]
       (is (= 6 (:value resp)))
       (is (= [nil nil] (:error resp))))))
 
-(deftest wrap+-grab-option
-  (testing "wrap+ grabs result when bucket opts provided"
-    (let [resp (wrap/wrap+ inc 4 {:bucketize true
+(deftest wrap-grab-option
+  (testing "wrap grabs result when bucket opts provided"
+    (let [resp (wrap/wrap inc 4 {:bucketize true
                                   :bucket {:meta {:job "plumber"}
                                            :name "my-bucket"}})]
       (is (= 5 (:value resp)))
@@ -140,21 +140,21 @@
       (is (= "my-bucket" (:name resp)))
       (is (= [nil nil] (:error resp))))))
 
-(deftest wrap+-grab-option-2
-  (testing "wrap+ grabs result when bucket opts provided"
-    (let [resp (wrap/wrap+ inc 4 {:bucketize true})]
+(deftest wrap-grab-option-2
+  (testing "wrap grabs result when bucket opts provided"
+    (let [resp (wrap/wrap inc 4 {:bucketize true})]
       (is (= 5 (:value resp)))
       (is (= [nil nil] (:error resp))))))
 
-(deftest wrap+-grab-option-2-1
-  (testing "wrap+ grabs result when bucket opts provided"
-    (let [resp (wrap/wrap+ inc {:bucketize true
+(deftest wrap-grab-option-2-1
+  (testing "wrap grabs result when bucket opts provided"
+    (let [resp (wrap/wrap inc {:bucketize true
                                 :bucket {}})]
       (is (fn? (:value resp))))))
 
-(deftest wrap+-grab-option-3
-  (testing "wrap+ grabs result when bucket opts provided"
-    (let [resp (wrap/wrap+ inc {:bucketize true
+(deftest wrap-grab-option-3
+  (testing "wrap grabs result when bucket opts provided"
+    (let [resp (wrap/wrap inc {:bucketize true
                                 :bucket {:meta {:job "plumber"}
                                          :name "my-bucket"}})]
       (is (fn? (:value resp)))
