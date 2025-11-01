@@ -1,6 +1,7 @@
 (ns bucket.spouts
   "High-level spout helpers intended for end-user consumption."
-  (:require [bucket.error :as error]
+  (:require [bucket :as bucket]
+            [bucket.error :as error]
             [bucket.log :as log]
             [bucket.meta :as meta]
             [bucket.spouts.helpers.chain :as chain]
@@ -8,32 +9,36 @@
             [clj-ulid :as ulid]))
 
 (defn spill
-  "Process a bucket: print logs, handle errors, optionally print metadata, return :value.
+  "Process a bucket: print logs, handle errors, optionally print metadata, dump bucket, return :value.
 
   Args:
   - bucket: Bucket map
   - log-out: output mode for logs - :none, :stdout, :file, or :both (default :both)
   - meta-out: output mode for metadata - :none, :stdout, :file, or :both (default :both)
   - error-out: output mode for errors - :none, :stdout, :file, or :both (default :both)
+  - bucket-out: output mode for the entire bucket - :none, :stdout, :file, or :both (default :none)
   - exit: exit behavior on error - :success, :fail, or :continue (default :fail)
   - out-dir: directory for file outputs (default: current directory)
   - require-value: boolean, when true checks if :value is nil (default false)
 
   Returns the :value value (may throw if nil and require-value is true)"
-  [bucket & {:keys [log-out meta-out error-out exit out-dir require-value]
+  [bucket & {:keys [log-out meta-out error-out bucket-out exit out-dir require-value]
              :or {log-out :both
                   meta-out :both
                   error-out :both
+                  bucket-out :both
                   exit :fail
                   require-value false}}]
   (let [name (:name bucket)
         log-formatter (extract/output-formatter log-out log/print {:out log-out :dir out-dir :name name})
         meta-formatter (extract/output-formatter meta-out meta/print {:out meta-out :dir out-dir :name name})
+        bucket-formatter (extract/output-formatter bucket-out bucket/print {:out bucket-out :dir out-dir :name name})
         error-formatter (extract/output-formatter error-out error/handle {:out error-out :dir out-dir :name name :exit exit})]
     (extract/spill-formatted bucket
                              :log-formatter log-formatter
                              :meta-formatter meta-formatter
                              :error-formatter error-formatter
+                             :bucket-formatter bucket-formatter
                              :require-value require-value)))
 
 (defn pour-into

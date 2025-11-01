@@ -17,7 +17,7 @@
         (println value)))))
 
 (defn spill-formatted
-  "Spill a bucket using custom formatters for logs, metadata, and errors.
+  "Spill a bucket using custom formatters for logs, metadata, errors, and optionally the full bucket.
 
   Args (all keyword arguments):
   - bucket: Bucket map (required as first positional arg)
@@ -25,15 +25,17 @@
   - log-formatter: function (logs-vector -> nil or string) to handle log entries
   - meta-formatter: function (meta-map -> nil or string) to handle metadata
   - error-formatter: function (error-tuple -> nil or string) to handle error tuples
+  - bucket-formatter: function (bucket -> nil or string) to handle full bucket dumps
   - require-value: boolean, when true checks if :value is nil (default false)
 
   Returns the :value (may throw if nil and require-value is true)"
-  [bucket & {:keys [out log-formatter meta-formatter error-formatter require-value]
+  [bucket & {:keys [out log-formatter meta-formatter error-formatter bucket-formatter require-value]
              :or {out *out*
                   require-value false}}]
   (apply-formatter log-formatter bucket out)
   (apply-formatter meta-formatter bucket out)
   (apply-formatter error-formatter bucket out)
+  (apply-formatter bucket-formatter bucket out)
   (let [value (:value bucket)]
     (when (and require-value (nil? value))
       (binding [*out* out]

@@ -20,9 +20,10 @@
    Output helpers:
    - spill      (fb.core.bucket.spouts) - prints logs, handles error, returns :value; optionally fails on nil
    - pour-into  (fb.core.bucket.spouts) - appends logs to external log vector; optionally fails if :value is nil"
-  (:require
-   [monad :as monad]
-   [schemas.bucket :as bs]))
+  (:refer-clojure :exclude [print])
+  (:require [bucket.print :as print]
+            [monad :as monad]
+            [schemas.bucket :as bs]))
 
 (defn pass
   "Pass the bucket to the next stage (alias of monad/bind).
@@ -207,3 +208,19 @@
   {:malli/schema [:=> [:cat [:* [:cat :keyword :any]]] bs/Bucket]}
   [& args]
   (apply monad/pure args))
+
+(defn print
+  "Print full bucket contents according to the requested output mode."
+  [bucket & {:keys [out dir name timestamp?]
+             :or {out :both}}]
+  (let [file-opts (cond-> {}
+                    dir (assoc :dir dir)
+                    name (assoc :name name)
+                    (some? timestamp?) (assoc :timestamp? timestamp?))]
+    (case out
+      :none nil
+      :stdout (print/->stdout bucket)
+      :file (apply print/->file bucket (apply concat file-opts))
+      :both (do
+              (print/->stdout bucket)
+              (apply print/->file bucket (apply concat file-opts))))))

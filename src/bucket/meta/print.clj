@@ -13,8 +13,8 @@
   "Write bucket metadata to a file and notify path.
 
    Args:
-   - meta: metadata map to write
-   - dir: optional output directory (default: ./meta)
+   - bucket: bucket containing metadata to write
+   - dir: optional output directory (defaults to ./meta, or out/<bucket-name> when the bucket has a name)
    - name: optional base filename (without extension)
    - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
 
@@ -24,10 +24,14 @@
    - If only name: <n>.edn
    - If neither: meta.edn"
   [bucket & {:keys [dir name timestamp?]
-             :or {dir "meta" timestamp? true}}]
-  (let [dir-file (io/file dir)]
-    (.mkdirs dir-file))
-  (let [filename (format/filename name :timestamp? timestamp? :type "meta" :ext "edn")
-        filepath (str dir "/" filename)]
-    (spit filepath (with-out-str (pp/pprint (:meta bucket))))
-    (println (str "Metadata written to: " filepath))))
+             :or {timestamp? true}}]
+  (let [bucket-name (:name bucket)
+        default-dir (if bucket-name (str "out/" bucket-name) "meta")
+        chosen-dir (or dir default-dir)
+        dir-file (io/file chosen-dir)]
+    (.mkdirs dir-file)
+    (let [filename (format/filename name :timestamp? timestamp? :type "meta" :ext "edn")
+          filepath (str chosen-dir "/" filename)]
+      (spit filepath (with-out-str (pp/pprint (:meta bucket))))
+      (println (str "Metadata written to: " filepath))))
+  bucket)

@@ -168,7 +168,7 @@
           error-tuple [ex "test stacktrace"]
           test-dir (str th/test-temp-root "/errors")]
       (error/handle error-tuple :out :file :dir test-dir :timestamp? false :name "test" :exit nil)
-      (let [file (io/file (str test-dir "/test.log"))
+      (let [file (io/file (str test-dir "/test.err"))
             content (slurp file)]
         (is (.exists file))
         (is (str/includes? content "error class: class java.lang.RuntimeException"))
@@ -183,7 +183,7 @@
       (error/handle error-tuple :out :file :dir test-dir :timestamp? true :exit nil)
       (let [files (.listFiles (io/file test-dir))]
         (is (pos? (count files)))
-        (is (str/ends-with? (.getName (first files)) ".log")
+        (is (str/ends-with? (.getName (first files)) ".err")
             "handle creates timestamped log files"))))
 
   (testing "handle with :out :both writes to file and stdout"
@@ -194,7 +194,7 @@
                           (error/handle error-tuple :out :both :dir test-dir :timestamp? false :name "both-test" :exit nil))]
       (is (str/includes? stdout-output "error class:"))
       (is (str/includes? stdout-output "Both output test"))
-      (let [file (io/file (str test-dir "/both-test.log"))
+      (let [file (io/file (str test-dir "/both-test.err"))
             content (slurp file)]
         (is (.exists file))
         (is (str/includes? content "Both output test")

@@ -30,7 +30,7 @@
           bucket (bucket/grab "file-value" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :file :meta-out :none :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :file :bucket-out :none :meta-out :none :out-dir temp-dir)]
                       (is (= "file-value" value))))]
       (is (not (.contains out-str "Log to file")))
       (let [log-files (filter #(.endsWith (.getName %) ".log")
@@ -70,7 +70,7 @@
           bucket (bucket/grab "data" :logs logs)
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :none :out-dir temp-dir)]
                       (is (= "data" value))))]
       (is (not (.contains out-str "Should not appear")))
       (is (zero? (count (.listFiles (io/file temp-dir))))
@@ -111,7 +111,7 @@
           bucket (bucket/grab "value" :logs logs :meta {:env "prod" :version "1.0"} :name "file-test-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :file :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :file :out-dir temp-dir)]
                       (is (= "value" value))))]
       (is (not (.contains out-str "=== Bucket Metadata ===")))
       (is (not (.contains out-str ":env")))
@@ -126,7 +126,7 @@
           bucket (bucket/grab "value" :logs logs :meta {:service "api" :request-id "123"} :name "both-output-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :both :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :both :out-dir temp-dir)]
                       (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":service"))
@@ -144,7 +144,7 @@
           bucket (bucket/grab "value" :logs logs :meta {:should-not-appear "in output"})
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :none :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :none :out-dir temp-dir)]
                       (is (= "value" value))))]
       (is (not (.contains out-str "=== Bucket Metadata ===")))
       (is (not (.contains out-str "should-not-appear")))
@@ -210,7 +210,7 @@
                               :name "everything-bucket")
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :both :meta-out :both :out-dir temp-dir :exit :continue)]
+                    (let [value (spouts/spill bucket :log-out :both :bucket-out :none :meta-out :both :out-dir temp-dir :exit :continue)]
                       (is (= "partial-data" value))))]
       (is (.contains out-str "Starting"))
       (is (.contains out-str "Processing"))
@@ -257,7 +257,7 @@
           bucket (bucket/grab "value" :logs logs :meta {:test "default"})
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (spouts/spill bucket :out-dir temp-dir))]
+                    (spouts/spill bucket :bucket-out :none :out-dir temp-dir))]
       (is (.contains out-str "Default test"))
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":test"))

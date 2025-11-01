@@ -21,7 +21,7 @@
 
    Args:
    - sink: any ErrorSink (error vector, bucket map, nil)
-   - dir: optional output directory (default: ./errors)
+   - dir: optional output directory (defaults to ./errors, or out/<bucket-name> when the sink is a bucket with a name)
    - name: optional base filename (without extension)
    - timestamp?: boolean, whether to prepend timestamp to filename (default: true)
 
@@ -33,12 +33,15 @@
 
    Returns the sink unchanged."
   [sink & {:keys [dir name timestamp?]
-           :or {dir "errors" timestamp? true}}]
+           :or {timestamp? true}}]
   (let [[err stacktrace :as error] (protocol/-current-error sink)]
     (when err
-      (let [dir-file (io/file dir)
-            filename (format/filename name :timestamp? timestamp? :type "error" :ext "log")
-            filepath (str dir "/" filename)
+      (let [bucket-name (when (map? sink) (:name sink))
+            default-dir (if bucket-name (str "out/" bucket-name) "errors")
+            chosen-dir (or dir default-dir)
+            dir-file (io/file chosen-dir)
+            filename (format/filename name :timestamp? timestamp? :type "error" :ext "err")
+            filepath (str chosen-dir "/" filename)
             parts [(str "error class: " (class err) "\n")
                    (str "error message: " (ex-message err) "\n")
                    (when-let [cause (ex-cause err)]
