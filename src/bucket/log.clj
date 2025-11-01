@@ -7,11 +7,10 @@
    - :level: one of :debug :info :warning :error :critical
    - :value: string message content"
   (:refer-clojure :exclude [filter print])
-  (:require [bin.format :as format]
-            [bucket.log.entry :as entry]
-            [bucket.log.protocol :as protocol]
+  (:require [bucket.log.entry :as entry]
+            [bucket.log.filter :as filter]
             [bucket.log.print :as print]
-            [bucket.log.filter :as filter])
+            [bucket.log.protocol :as protocol])
   (:import [java.time Instant]))
 
 (defn print
@@ -39,19 +38,17 @@
    Each log entry is printed with appropriate formatting."
   [sink & {:keys [out dir name timestamp?]
            :or {out :both}}]
-  (let [logs (protocol/-current-logs sink)
-        formatted-logs (map format/log-text logs)
-        file-opts (cond-> {}
+  (let [file-opts (cond-> {}
                     dir (assoc :dir dir)
                     name (assoc :name name)
                     (some? timestamp?) (assoc :timestamp? timestamp?))]
     (case out
       :none nil
-      :stdout (print/->stdout formatted-logs)
-      :file (apply print/->file formatted-logs (apply concat file-opts))
+      :stdout (print/->stdout sink)
+      :file (apply print/->file sink (apply concat file-opts))
       :both (do
-              (print/->stdout formatted-logs)
-              (apply print/->file formatted-logs (apply concat file-opts))))))
+              (print/->stdout sink)
+              (apply print/->file sink (apply concat file-opts))))))
 
 (defn filter
   "Filter log entries according to the requested mode.

@@ -42,6 +42,10 @@
   (-current-error [sink] (ensure-error-vector (:error sink)))
   (-with-error [sink error] (assoc sink :error (ensure-error-vector error)))
 
+  clojure.lang.ISeq
+  (-current-error [sink] (ensure-error-vector sink))
+  (-with-error [_ error] (ensure-error-vector error))
+
   nil
   (-current-error [_] [nil nil])
   (-with-error [_ error] (ensure-error-vector error)))

@@ -44,10 +44,10 @@
       (case out
         :none nil
         :stdout (print/->stdout normalized-error)
-        :file (apply print/->file normalized-error (apply concat file-opts))
+        :file (apply print/->file sink (apply concat file-opts))
         :both (do
                 (print/->stdout normalized-error)
-                (apply print/->file normalized-error (apply concat file-opts)))))
+                (apply print/->file sink (apply concat file-opts)))))
 
     (when err
       (case exit

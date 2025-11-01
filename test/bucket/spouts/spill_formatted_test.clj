@@ -13,8 +13,8 @@
           ex (ex-info "Test error" {})
           bucket (bucket/grab "value" :logs logs :error [ex "context"])
           output (StringWriter.)
-          log-formatter (fn [logs] (str/join "\n" (map #(str "LOG: " (:value %)) logs)))
-          error-formatter (fn [[_ msg]] (str "ERROR: " msg))
+          log-formatter (fn [bucket] (str/join "\n" (map #(str "LOG: " (:value %)) (:logs bucket))))
+          error-formatter (fn [bucket] (str "ERROR: " (second (:error bucket))))
           value (extract-spouts/spill-formatted bucket
                                          :out output
                                          :log-formatter log-formatter
@@ -30,15 +30,15 @@
     (let [logs [{:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "Test"}]
           bucket (bucket/grab "data" :logs logs)
           output (StringWriter.)
-          log-formatter (fn [logs] (str/join "\n" (map #(str "CUSTOM: " (:value %)) logs)))
-          error-formatter (fn [[ex msg]]
-                            (when (or ex msg)
+          log-formatter (fn [bucket] (str/join "\n" (map #(str "CUSTOM: " (:value %)) (:logs bucket))))
+          error-formatter (fn [bucket]
+                            (when (or (first (:error bucket)) (second (:error bucket)))
                               "ERROR DETECTED"))
           value (extract-spouts/spill-formatted bucket
-                                         :out output
-                                         :log-formatter log-formatter
-                                         :error-formatter error-formatter
-                                         :require-value false)]
+                                                :out output
+                                                :log-formatter log-formatter
+                                                :error-formatter error-formatter
+                                                :require-value false)]
       (is (= "data" value))
       (is (str/includes? (str output) "CUSTOM: Test"))
       (is (not (str/includes? (str output) "ERROR DETECTED"))
@@ -49,11 +49,11 @@
     (let [logs [{:indent 1 :time 1000 :level :debug :value "Processing"}]
           bucket (bucket/grab {:status "ok"} :logs logs)
           output (StringWriter.)
-          json-log-formatter (fn [logs]
+          json-log-formatter (fn [bucket]
                                (str/join "\n"
                                          (map #(str "{\"level\":\"" (name (:level %))
                                                     "\",\"message\":\"" (:value %) "\"}")
-                                              logs)))
+                                              (:logs bucket))))
           json-error-formatter (fn [_] "{}")
           value (extract-spouts/spill-formatted bucket
                                          :out output
@@ -69,13 +69,14 @@
     (let [logs [{:indent 0 :time (Instant/parse "2024-01-15T10:30:00Z") :level :info :value "Test log"}]
           bucket (bucket/grab "result-value" :logs logs)
           output (atom [])
-          log-formatter (fn [logs]
-                          (doseq [log logs]
-                            (swap! output conj (str "LOGGED: " (:value log))))
-                          nil)
+          log-formatter (fn [bucket]
+                          (let [logs (:logs bucket)]
+                            (doseq [log logs]
+                              (swap! output conj (str "LOGGED: " (:value log))))
+                            nil))
           value (extract-spouts/spill-formatted bucket
-                                         :log-formatter log-formatter
-                                         :require-value false)]
+                                                :log-formatter log-formatter
+                                                :require-value false)]
       (is (= "result-value" value))
       (is (= ["LOGGED: Test log"] @output)
           "side-effecting formatter is called and modifies external state"))))

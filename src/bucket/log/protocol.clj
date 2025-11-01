@@ -23,6 +23,10 @@
   (-current-logs [sink] (ensure-log-vector (:logs sink)))
   (-with-logs [sink logs] (assoc sink :logs logs))
 
+  clojure.lang.ISeq
+  (-current-logs [sink] (ensure-log-vector sink))
+  (-with-logs [_ logs] logs)
+
   nil
   (-current-logs [_] [])
   (-with-logs [_ logs] logs))

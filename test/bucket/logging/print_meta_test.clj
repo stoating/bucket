@@ -1,6 +1,7 @@
 (ns bucket.logging.print-meta-test
   "Tests for logging print function."
-  (:require [bucket.meta :as meta]
+  (:require [bucket :as bucket]
+            [bucket.meta :as meta]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [test-helpers :as th]))
@@ -9,7 +10,7 @@
 
 (deftest ->stdout-test
   (testing "metadata with :stdout output"
-    (let [meta-data {:user "alice" :timestamp 1234567890}
+    (let [meta-data (bucket/grab :meta {:user "alice" :timestamp 1234567890})
           out-str (with-out-str
                     (meta/print meta-data :out :stdout :name "test-bucket"))]
       (is (.contains out-str "=== Bucket Metadata ==="))
@@ -21,7 +22,7 @@
 
 (deftest ->file-test
   (testing "metadata with :file output"
-    (let [meta-data {:operation "test" :version "1.0"}
+    (let [meta-data (bucket/grab :meta {:operation "test" :version "1.0"})
           bucket-name "test-bucket"
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
@@ -36,7 +37,7 @@
 
 (deftest print-to-both-test
   (testing "metadata with :both output"
-    (let [meta-data {:env "prod" :tags ["test"]}
+    (let [meta-data (bucket/grab :meta {:env "prod" :tags ["test"]})
           bucket-name "both-bucket"
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
@@ -52,7 +53,7 @@
 
 (deftest print-to-none-test
   (testing "metadata with :none output"
-    (let [meta-data {:should-not-appear "anywhere"}
+    (let [meta-data (bucket/grab :meta {:should-not-appear "anywhere"})
           bucket-name "none-bucket"
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)
@@ -64,10 +65,10 @@
 
 (deftest print-complex-structure-test
   (testing "nested metadata structures"
-    (let [meta-data {:user {:name "bob" :id 42}
-                     :context {:environment "staging" :region "us-west"}
-                     :tags ["important" "monitored"]
-                     :config {:retries 3 :timeout 5000}}
+    (let [meta-data (bucket/grab :meta {:user {:name "bob" :id 42}
+                                        :context {:environment "staging" :region "us-west"}
+                                        :tags ["important" "monitored"]
+                                        :config {:retries 3 :timeout 5000}})
           out-str (with-out-str
                     (meta/print meta-data :out :stdout :name "complex-bucket"))]
       (is (.contains out-str "=== Bucket Metadata ==="))
@@ -83,7 +84,7 @@
 
 (deftest print-with-custom-name-test
   (testing "custom bucket name in file output"
-    (let [meta-data {:custom "name"}
+    (let [meta-data (bucket/grab :meta {:custom "name"})
           custom-name "mycustom"
           temp-dir th/test-temp-root
           temp-dir-file (io/file temp-dir)

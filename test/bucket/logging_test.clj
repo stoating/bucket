@@ -473,7 +473,7 @@
             "print with :out :both writes to both stdout and file"))))
 
   (testing "print writes to file"
-    (let [meta {:bucket-name "test-bucket" :total-items 42}
+    (let [meta (bucket/grab :meta {:bucket-name "test-bucket" :total-items 42})
           test-dir (str th/test-temp-root "/meta")]
       (meta/print meta :out :file :dir test-dir :timestamp? false :name "test-meta")
       (let [file (io/file (str test-dir "/test-meta.edn"))
@@ -486,7 +486,7 @@
             "print writes metadata to edn file"))))
 
   (testing "print with :out :both writes to file and stdout"
-    (let [meta {:test-key "test-value"}
+    (let [meta (bucket/grab :meta {:test-key "test-value"})
           test-dir (str th/test-temp-root "/meta")
           stdout-output (with-out-str
                           (meta/print meta :out :both :dir test-dir :timestamp? false :name "both-meta"))]

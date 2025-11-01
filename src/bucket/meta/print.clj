@@ -5,9 +5,9 @@
 
 (defn ->stdout
   "Print bucket metadata to stdout with a header."
-  [meta]
+  [bucket]
   (println "\n=== Bucket Metadata ===")
-  (pp/pprint meta))
+  (pp/pprint (:meta bucket)))
 
 (defn ->file
   "Write bucket metadata to a file and notify path.
@@ -23,11 +23,11 @@
    - If only timestamp?: <timestamp>.edn
    - If only name: <n>.edn
    - If neither: meta.edn"
-  [meta & {:keys [dir name timestamp?]
-           :or {dir "meta" timestamp? true}}]
+  [bucket & {:keys [dir name timestamp?]
+             :or {dir "meta" timestamp? true}}]
   (let [dir-file (io/file dir)]
     (.mkdirs dir-file))
   (let [filename (format/filename name :timestamp? timestamp? :type "meta" :ext "edn")
         filepath (str dir "/" filename)]
-    (spit filepath (with-out-str (pp/pprint meta)))
+    (spit filepath (with-out-str (pp/pprint (:meta bucket))))
     (println (str "Metadata written to: " filepath))))

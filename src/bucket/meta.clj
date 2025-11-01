@@ -13,7 +13,7 @@
   "Print bucket metadata according to output mode.
 
    Args:
-   - meta: metadata map from bucket
+   - bucket: bucket
    - out: output mode - :none, :stdout, :file, or :both (default :both)
    - dir: optional output directory for :file or :both modes (default: ./meta)
    - name: optional base filename (without extension) for :file or :both modes
@@ -30,7 +30,7 @@
    - If only timestamp?: <timestamp>.edn
    - If only name: <n>.edn
    - If neither: meta.edn"
-  [meta & {:keys [out dir name timestamp?]
+  [bucket & {:keys [out dir name timestamp?]
            :or {out :both}}]
   (let [file-opts (cond-> {}
                     dir (assoc :dir dir)
@@ -38,8 +38,8 @@
                     (some? timestamp?) (assoc :timestamp? timestamp?))]
     (case out
       :none nil
-      :stdout (print/->stdout meta)
-      :file (apply print/->file meta (apply concat file-opts))
+      :stdout (print/->stdout bucket)
+      :file (apply print/->file bucket (apply concat file-opts))
       :both (do
-              (print/->stdout meta)
-              (apply print/->file meta (apply concat file-opts))))))
+              (print/->stdout bucket)
+              (apply print/->file bucket (apply concat file-opts))))))

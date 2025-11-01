@@ -31,9 +31,9 @@
   [bucket & {:keys [out log-formatter meta-formatter error-formatter require-value]
              :or {out *out*
                   require-value false}}]
-  (apply-formatter log-formatter (:logs bucket) out)
-  (apply-formatter meta-formatter (:meta bucket) out)
-  (apply-formatter error-formatter (:error bucket) out)
+  (apply-formatter log-formatter bucket out)
+  (apply-formatter meta-formatter bucket out)
+  (apply-formatter error-formatter bucket out)
   (let [value (:value bucket)]
     (when (and require-value (nil? value))
       (binding [*out* out]
@@ -52,6 +52,9 @@
   Returns: handler function or nil if output-mode is :none"
   [output-mode output-fn opts]
   (when (not= output-mode :none)
-    (fn [data]
-      (apply output-fn data (apply concat opts))
-      nil)))
+    (let [extra-args (if (seq opts)
+                       (vec (apply concat opts))
+                       [])]
+      (fn [data]
+        (apply output-fn (into [data] extra-args))
+        nil))))
