@@ -2,8 +2,7 @@
   "Error handling helpers for Bucket processing.
 
    Error format: [exception-or-nil stacktrace-string-or-nil]"
-  (:require [bucket.error.entry :as error-entry]
-            [bucket.error.print :as print]
+  (:require [bucket.error.print :as print]
             [bucket.error.protocol :as protocol]))
 
 (defn handle
@@ -40,7 +39,7 @@
                     dir (assoc :dir dir)
                     name (assoc :name name)
                     (some? timestamp?) (assoc :timestamp? timestamp?))]
-    ;; Handle output
+
     (when err
       (case out
         :none nil
@@ -50,7 +49,6 @@
                 (print/->stdout normalized-error)
                 (apply print/->file normalized-error (apply concat file-opts)))))
 
-    ;; Handle exit
     (when err
       (case exit
         :success (do
@@ -71,31 +69,3 @@
   [sink]
   (let [[err _] (protocol/-current-error sink)]
     (some? err)))
-
-(defn wrap-error
-  "Wrap a function to catch exceptions and return as error tuple.
-
-   Args:
-   - f: function to wrap
-
-   Returns: wrapped function that catches exceptions"
-  [f]
-  (fn [& args]
-    (try
-      (apply f args)
-      (catch Exception e
-        (error-entry/make e)))))
-
-(defn with-context
-  "Add context message to an error.
-
-   Args:
-   - sink: error vector or bucket map
-   - context: string with additional context
-
-   Returns: new error tuple with context added"
-  [sink context]
-  (let [[err stacktrace] (protocol/-current-error sink)]
-    (if err
-      (protocol/-with-error sink [(ex-info context {:wrapped err}) stacktrace])
-      sink)))

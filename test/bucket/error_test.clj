@@ -79,91 +79,6 @@
       (is (nil? formatted)
           "format-error returns nil when there is no error"))))
 
-(deftest wrap-error-test
-  (testing "wrap-error catches exceptions and returns error tuple"
-    (let [failing-fn (fn [_] (throw (RuntimeException. "Wrapped error")))
-          wrapped-fn (error/wrap-error failing-fn)
-          result (wrapped-fn "test-arg")]
-      (is (vector? result))
-      (is (= 2 (count result)))
-      (let [[err stacktrace] result]
-        (is (instance? RuntimeException err))
-        (is (= "Wrapped error" (.getMessage err)))
-        (is (string? stacktrace)
-            "wrap-error catches exception and returns [exception stacktrace] tuple"))))
-
-  (testing "wrap-error passes through successful results"
-    (let [success-fn (fn [x y] (+ x y))
-          wrapped-fn (error/wrap-error success-fn)
-          result (wrapped-fn 5 10)]
-      (is (= 15 result)
-          "wrap-error passes through successful results unchanged")))
-
-  (testing "wrap-error handles functions with no arguments"
-    (let [no-arg-failing-fn (fn [] (throw (Exception. "No args error")))
-          wrapped-fn (error/wrap-error no-arg-failing-fn)
-          result (wrapped-fn)]
-      (is (vector? result))
-      (let [[err _] result]
-        (is (instance? Exception err))
-        (is (= "No args error" (.getMessage err))
-            "wrap-error handles zero-arg functions that throw exceptions"))))
-
-  (testing "wrap-error handles functions with multiple arguments"
-    (let [multi-arg-fn (fn [a b c d] (if (= a "fail")
-                                       (throw (Exception. "Multi arg error"))
-                                       (+ a b c d)))
-          wrapped-fn (error/wrap-error multi-arg-fn)]
-      (is (= 10 (wrapped-fn 1 2 3 4)))
-      (let [result (wrapped-fn "fail" 2 3 4)
-            [err _] result]
-        (is (instance? Exception err))
-        (is (= "Multi arg error" (.getMessage err))
-            "wrap-error handles multi-arg functions with both success and error cases")))))
-
-(deftest with-context-test
-  (testing "with-context adds context to existing error"
-    (let [original-ex (RuntimeException. "Original error")
-          original-error [original-ex "original stacktrace"]
-          context "Processing failed during validation"
-          [new-err stacktrace] (error/with-context original-error context)]
-      (is (instance? clojure.lang.ExceptionInfo new-err))
-      (is (= context (.getMessage new-err)))
-      (is (= original-ex (:wrapped (ex-data new-err))))
-      (is (= "original stacktrace" stacktrace)
-          "with-context wraps error in ExceptionInfo with context message and preserves stacktrace")))
-
-  (testing "with-context preserves no-error state"
-    (let [no-error [nil nil]
-          context "This won't be added"
-          result (error/with-context no-error context)]
-      (is (= no-error result)
-          "with-context does not modify [nil nil] error tuples")))
-
-  (testing "with-context handles error with nil stacktrace"
-    (let [ex (Exception. "Base error")
-          error-tuple [ex nil]
-          context "Added context"
-          [new-err stacktrace] (error/with-context error-tuple context)]
-      (is (instance? clojure.lang.ExceptionInfo new-err))
-      (is (= context (.getMessage new-err)))
-      (is (= ex (:wrapped (ex-data new-err))))
-      (is (nil? stacktrace)
-          "with-context wraps error and preserves nil stacktrace")))
-
-  (testing "with-context updates bucket error"
-    (let [ex (Exception. "Bucket base error")
-          bucket (bucket/grab :value :unchanged :error [ex "stacktrace"])
-          context "Bucket context"
-          updated (error/with-context bucket context)
-          [wrapped stacktrace] (:error updated)]
-      (is (= :unchanged (:value updated)))
-      (is (instance? clojure.lang.ExceptionInfo wrapped))
-      (is (= context (.getMessage wrapped)))
-      (is (= ex (:wrapped (ex-data wrapped))))
-      (is (= "stacktrace" stacktrace))
-      (is (map? updated)))))
-
 (deftest handle-stdout-test
   (testing "handle with no error does nothing"
     (let [no-error [nil nil]
@@ -219,44 +134,6 @@
       (is (str/includes? output "Bucket error"))
       (is (str/includes? output "bucket stacktrace")))))
 
-(deftest error-integration-test
-  (testing "full error workflow: wrap -> make -> format -> handle"
-    (let [risky-fn (fn [x] (if (= x "boom")
-                             (throw (Exception. "Integration test error"))
-                             (* x 2)))
-          wrapped-fn (error/wrap-error risky-fn)
-          error-result (wrapped-fn "boom")]
-      (is (error/? error-result))
-      (let [formatted (format/error-text error-result)]
-        (is (str/includes? formatted "Error: Integration test error")))
-      (let [output (with-out-str
-                     (error/handle error-result :out :stdout :exit nil))]
-        (is (str/includes? output "error message: Integration test error")
-            "full workflow catches, formats, and handles errors correctly"))))
-
-  (testing "error context chain"
-    (let [base-error (error-entry/make (Exception. "Base problem"))
-          step1-error (error/with-context base-error "Step 1 failed")
-          step2-error (error/with-context step1-error "Step 2 failed")]
-      (is (error/? step2-error))
-      (let [[final-err _] step2-error]
-        (is (= "Step 2 failed" (.getMessage final-err)))
-        (let [step1-err (:wrapped (ex-data final-err))]
-          (is (= "Step 1 failed" (.getMessage step1-err)))
-          (let [base-err (:wrapped (ex-data step1-err))]
-            (is (= "Base problem" (.getMessage base-err))
-                "error context wraps previous contexts, creating a chain from outermost to base"))))))
-
-  (testing "no error propagation through all functions"
-    (let [no-error [nil nil]]
-      (is (not (error/? no-error)))
-      (is (nil? (format/error-text no-error)))
-      (is (= no-error (error/with-context no-error "Won't be added")))
-      (let [output (with-out-str
-                     (error/handle no-error :out :stdout :exit nil))]
-        (is (empty? output)
-            "no-error [nil nil] passes through all functions unchanged")))))
-
 (deftest error-edge-cases-test
   (testing "error functions handle empty and nil inputs gracefully"
     (is (= [nil nil] (error-entry/make nil)))
@@ -275,17 +152,6 @@
       (is (str/includes? output "error class:"))
       (is (str/includes? output "error message:")
           "handle handles nil exception messages gracefully")))
-
-  (testing "wrap-error handles nested exceptions correctly"
-    (let [nested-fn (fn [] (throw (Exception. "Inner exception")))
-          wrapper-fn (fn [] (try (nested-fn) (catch Exception e (throw (RuntimeException. "Outer exception" e)))))
-          wrapped-fn (error/wrap-error wrapper-fn)
-          [err _] (wrapped-fn)]
-      (is (instance? RuntimeException err))
-      (is (= "Outer exception" (.getMessage err)))
-      (is (instance? Exception (.getCause err)))
-      (is (= "Inner exception" (.getMessage (.getCause err)))
-          "wrap-error preserves nested exception cause chain")))
 
   (testing "error functions handle very long stacktraces"
     (let [deep-ex (Exception. "Deep error")
