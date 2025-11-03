@@ -38,7 +38,7 @@
     (let [ts (Instant/now)
           old-bucket (monad/pure :res :logs [{:indent 0 :time ts :level :info :value "child"}])
           new-bucket (monad/pure :new-value)
-          combined (spouts/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [:res :new-value] (:value combined)))
       (is (= (:id new-bucket) (:id combined)))
       (is (= [{:indent 0 :time ts :level :info :value "child"}]
@@ -51,7 +51,7 @@
           ts2 (.plusSeconds ts1 1)
           old-bucket (monad/pure :ok :logs [{:indent 0 :time ts2 :level :info :value "child"}])
           new-bucket (monad/pure :new-value :logs [{:indent 2 :time ts1 :level :info :value "base"}])
-          combined (spouts/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [:ok :new-value] (:value combined)))
       (is (= 2 (count (:logs combined))))
       (is (= "base" (:value (first (:logs combined)))))
@@ -63,7 +63,7 @@
     (let [ts (Instant/now)
           old-bucket (monad/pure :res :logs [{:indent 0 :time ts :level :info :value "child"}] :meta {:old :data})
           new-bucket (monad/pure :new-value :meta {:new :data})
-          combined (spouts/pour-into new-bucket old-bucket)]
+          combined (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= {:old :data :new :data}
              (:meta combined))
           "pour-into merges metadata by default")))

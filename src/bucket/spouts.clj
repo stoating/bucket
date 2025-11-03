@@ -55,7 +55,7 @@
   [to-bucket from-bucket & {:keys [new-name meta-merge-type pour-type]
                             :or {meta-merge-type :merge
                                  new-name (:name to-bucket)
-                                 pour-type :gather}}]
+                                 pour-type :stir-in}}]
   {:id (:id to-bucket)
    :name new-name
    :value (chain/combine-values from-bucket to-bucket pour-type)

@@ -10,7 +10,7 @@
     (let [ts (Instant/parse "2024-01-15T10:30:00Z")
           old-bucket (bucket/grab :old-value :logs [{:indent 0 :time ts :level :info :value "old"}])
           new-bucket (bucket/grab :new-value :logs [{:indent 0 :time ts :level :info :value "new"}])
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [:old-value :new-value] (:value result))
           "result should gather both old and new values by default"))))
 
@@ -42,7 +42,7 @@
   (testing "stir-in-old->new applies old result as function to new bucket"
     (let [old-bucket (bucket/grab inc) ; old result is a function
           new-bucket (bucket/grab 42) ; new result is a value
-          result (spouts/pour-into new-bucket old-bucket :pour-type :stir-in)]
+          result (spouts/pour-into new-bucket old-bucket)]
       (is (= 43 (:value result))
           "should apply old function (inc) to new bucket's value (42)")))
 
@@ -73,7 +73,7 @@
     (let [ts (Instant/parse "2024-01-15T10:30:00Z")
           old-bucket (bucket/grab :old :logs [{:indent 0 :time ts :level :info :value "old"}])
           new-bucket (bucket/grab :new :logs [{:indent 0 :time ts :level :info :value "new"}])
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= (:id new-bucket) (:id result))
           "id should come from new bucket")
       (is (not= (:id old-bucket) (:id result))
@@ -83,7 +83,7 @@
   (testing "name comes from new bucket by default"
     (let [old-bucket (bucket/grab :old :name "old-bucket")
           new-bucket (bucket/grab :new :name "new-bucket")
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= "new-bucket" (:name result))
           "name should come from new bucket"))))
 
@@ -91,7 +91,7 @@
   (testing "name can be overridden with :new-name option"
     (let [old-bucket (bucket/grab :old :name "old-bucket")
           new-bucket (bucket/grab :new :name "new-bucket")
-          result (spouts/pour-into new-bucket old-bucket :new-name "custom-bucket")]
+          result (spouts/pour-into new-bucket old-bucket :new-name "custom-bucket" :pour-type :gather)]
       (is (= "custom-bucket" (:name result))
           "name should be the custom name provided"))))
 
@@ -107,7 +107,7 @@
           new-bucket (bucket/grab :new
                                   :logs [{:indent 0 :time ts2 :level :info :value "second"}
                                          {:indent 2 :time ts4 :level :warn :value "fourth"}])
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= 4 (count (:logs result))))
       (is (= ["first" "second" "third" "fourth"]
              (mapv :value (:logs result)))
@@ -119,7 +119,7 @@
           ts2 (Instant/parse "2024-01-15T10:29:00Z")
           old-bucket (bucket/grab :old :logs [{:indent 5 :time ts1 :level :error :value "later"}])
           new-bucket (bucket/grab :new :logs [{:indent 2 :time ts2 :level :debug :value "earlier"}])
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [{:indent 2 :time ts2 :level :debug :value "earlier"}
               {:indent 5 :time ts1 :level :error :value "later"}]
              (:logs result))
@@ -129,7 +129,7 @@
   (testing "metadata is merged by default (new overrides old)"
     (let [old-bucket (bucket/grab :old :meta {:source :api :version 1 :user "alice"})
           new-bucket (bucket/grab :new :meta {:destination :db :version 2})
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= {:source :api :version 2 :destination :db :user "alice"}
              (:meta result))
           "new bucket meta should override old bucket meta, but preserve unique keys"))))
@@ -138,7 +138,7 @@
   (testing "metadata is merged when :meta-merge-type is :merge"
     (let [old-bucket (bucket/grab :old :meta {:a 1 :b 2 :c 3})
           new-bucket (bucket/grab :new :meta {:b 99 :d 4})
-          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :merge)]
+          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :merge :pour-type :gather)]
       (is (= {:a 1 :b 99 :c 3 :d 4}
              (:meta result))
           "merge should combine both metas with new values taking precedence"))))
@@ -148,7 +148,7 @@
     (let [old-bucket (bucket/grab :old :meta {:source :api :version 1})
           new-bucket (bucket/grab :new :meta {:destination :db})
           old-id (:id old-bucket)
-          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot)]
+          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot :pour-type :gather)]
       (is (= {:destination :db
               :previous-buckets [{old-id {:source :api :version 1}}]}
              (:meta result))
@@ -159,7 +159,7 @@
     (let [old-bucket (bucket/grab :old :meta {})
           new-bucket (bucket/grab :new :meta {:destination :db})
           old-id (:id old-bucket)
-          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot)]
+          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot :pour-type :gather)]
       (is (= {:destination :db
               :previous-buckets [{old-id {}}]}
              (:meta result))
@@ -171,7 +171,7 @@
           old-bucket (bucket/grab :old :meta {:source :api :version 1})
           new-bucket (bucket/grab :new :meta {:destination :db :previous-buckets [{first-old-id {:original :data}}]})
           old-id (:id old-bucket)
-          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot)]
+          result (spouts/pour-into new-bucket old-bucket :meta-merge-type :snapshot :pour-type :gather)]
       (is (= {:destination :db
               :previous-buckets [{first-old-id {:original :data}}
                                  {old-id {:source :api :version 1}}]}
@@ -184,7 +184,7 @@
           new-error (ex-info "new error" {})
           old-bucket (bucket/grab :old  :error [old-error "old msg"])
           new-bucket (bucket/grab :new  :error [new-error "new msg"])
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [new-error "new msg"] (:error result))
           "error should come from new bucket"))))
 
@@ -192,6 +192,6 @@
   (testing "handles buckets with no logs"
     (let [old-bucket (bucket/grab :old)
           new-bucket (bucket/grab :new)
-          result (spouts/pour-into new-bucket old-bucket)]
+          result (spouts/pour-into new-bucket old-bucket {:pour-type :gather})]
       (is (= [] (:logs result))
           "should handle empty logs gracefully"))))
