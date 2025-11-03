@@ -15,7 +15,7 @@
                 (log-entry/make "Second message" :level :debug :indent 4)]
           bucket (bucket/grab "value" :logs logs)
           out-before (with-out-str
-                       (let [value (spouts/spill bucket :log-out :stdout :meta-out :none)]
+                       (let [value (spouts/spill bucket :log-out :stdout :meta-out :none :out-dir th/test-temp-root)]
                          (is (= "value" value))))]
       (is (.contains out-before "First message"))
       (is (.contains out-before "Second message"))
@@ -95,7 +95,7 @@
     (let [logs [(log-entry/make "With meta")]
           bucket (bucket/grab "value" :logs logs :meta {:user "alice" :operation "test"})
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout :out-dir th/test-temp-root)]
                       (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ==="))
       (is (.contains out-str ":user"))
@@ -116,7 +116,7 @@
       (is (not (.contains out-str "=== Bucket Metadata ===")))
       (is (not (.contains out-str ":env")))
       (is (.contains out-str "Metadata written to:"))
-      (is (.contains out-str "file-test-bucket.edn"))
+      (is (.contains out-str "file-test-bucket-meta.edn"))
       (is (= 1 (count (.listFiles (io/file temp-dir))))
           "spill with :meta-out :file writes metadata to file and not stdout"))))
 
@@ -134,7 +134,7 @@
       (is (.contains out-str ":request-id"))
       (is (.contains out-str "123"))
       (is (.contains out-str "Metadata written to:"))
-      (is (.contains out-str "both-output-bucket.edn"))
+      (is (.contains out-str "both-output-bucket-meta.edn"))
       (is (= 1 (count (.listFiles (io/file temp-dir))))
           "spill with :meta-out :both writes metadata to both stdout and file"))))
 
@@ -157,7 +157,7 @@
     (let [logs [(log-entry/make "Empty meta" :info 0)]
           bucket (bucket/grab "value" :logs logs :meta {})
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :stdout :out-dir th/test-temp-root)]
                       (is (= "value" value))))]
       (is (.contains out-str "=== Bucket Metadata ===")
           "spill prints metadata header even when metadata is empty"))))
@@ -169,7 +169,7 @@
                                                         :context {:env "staging" :region "us-west"}
                                                         :tags ["critical" "monitored"]})
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :none :meta-out :stdout)]
+                    (let [value (spouts/spill bucket :log-out :none :bucket-out :none :meta-out :stdout :out-dir th/test-temp-root)]
                       (is (= "value" value))))]
       (is (.contains out-str ":user"))
       (is (.contains out-str ":name"))
@@ -187,7 +187,7 @@
           bucket (bucket/grab "combined-value" :logs logs :meta {:combined "test" :count 2})
           temp-dir th/test-temp-root
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :stdout :out-dir temp-dir)]
+                    (let [value (spouts/spill bucket :log-out :stdout :bucket-out :none :meta-out :stdout :out-dir temp-dir)]
                       (is (= "combined-value" value))))]
       (is (.contains out-str "Log entry 1"))
       (is (.contains out-str "Log entry 2"))
@@ -221,7 +221,7 @@
       (is (.contains out-str ":attempt"))
       (is (.contains out-str "3"))
       (is (.contains out-str "Metadata written to:"))
-      (is (.contains out-str "everything-bucket.edn"))
+      (is (.contains out-str "everything-bucket-meta.edn"))
       (is (= 3 (count (.listFiles (io/file temp-dir))))
           "spill with all outputs prints logs, error, metadata to both stdout and files"))))
 
@@ -230,7 +230,7 @@
     (let [logs [(log-entry/make "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :none)]
+                    (let [value (spouts/spill bucket :log-out :stdout :bucket-out :none :meta-out :none :out-dir th/test-temp-root)]
                       (is (nil? value))))]
       (is (.contains out-str "Returning nil")
           "spill returns nil without throwing by default"))))
@@ -239,14 +239,17 @@
   (testing "spill throws exception when value is nil and require-value is true"
     (let [bucket (bucket/grab nil)]
       (is (thrown-with-msg? Exception #"value is nil"
-                            (spouts/spill bucket :log-out :none :meta-out :none :require-value true))))))
+                            (spouts/spill bucket :log-out :none :meta-out :none :require-value true :out-dir th/test-temp-root))))))
 
 (deftest spill-require-value-false-test
   (testing "spill returns nil when value is nil and require-value is false"
     (let [logs [(log-entry/make "Returning nil" :info 0)]
           bucket (bucket/grab nil :logs logs)
           out-str (with-out-str
-                    (let [value (spouts/spill bucket :log-out :stdout :meta-out :none :require-value false)]
+                    (let [value (spouts/spill bucket {:log-out :stdout
+                                                      :meta-out :none
+                                                      :require-value false
+                                                      :out-dir th/test-temp-root})]
                       (is (nil? value))))]
       (is (.contains out-str "Returning nil")
           "spill returns nil without throwing when :require-value is false"))))

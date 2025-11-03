@@ -31,7 +31,7 @@
       (is (.contains out-str "Metadata written to:"))
       (is (.contains out-str bucket-name))
       (is (.contains out-str ".edn"))
-      (is (.contains out-str "test-bucket.edn"))
+      (is (.contains out-str "test-bucket-meta.edn"))
       (is (= 1 (count (.listFiles temp-dir-file)))
           "print creates a single .edn file in the specified directory"))))
 
@@ -47,7 +47,7 @@
       (is (.contains out-str ":env"))
       (is (.contains out-str "prod"))
       (is (.contains out-str "Metadata written to:"))
-      (is (.contains out-str "both-bucket.edn"))
+      (is (.contains out-str "both-bucket-meta.edn"))
       (is (= 1 (count (.listFiles temp-dir-file)))
           "print outputs to stdout and creates file when :both is specified"))))
 
@@ -91,7 +91,7 @@
           out-str (with-out-str
                     (meta/print meta-data :out :file :name custom-name :dir temp-dir))]
       (is (.contains out-str "Metadata written to:"))
-      (is (.contains out-str (str custom-name ".edn")))
+      (is (.contains out-str (str custom-name "-meta.edn")))
       (is (= 1 (count (.listFiles temp-dir-file))))
       (let [created-file (first (.listFiles temp-dir-file))]
         (is (.contains (.getName created-file) custom-name)

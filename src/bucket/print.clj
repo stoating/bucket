@@ -18,7 +18,7 @@
         chosen-dir (or dir default-dir)
         dir-file (io/file chosen-dir)]
     (.mkdirs dir-file)
-    (let [filename (format/filename name :timestamp? timestamp? :type "bucket" :ext "edn")
+    (let [filename (format/filename (str name "-bucket") :timestamp? timestamp? :type "bucket" :ext "edn")
           filepath (str chosen-dir "/" filename)]
       (spit filepath (with-out-str (pp/pprint bucket)))
       (println (str "Bucket written to: " filepath))))

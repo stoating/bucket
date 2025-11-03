@@ -30,7 +30,7 @@
         chosen-dir (or dir default-dir)
         dir-file (io/file chosen-dir)]
     (.mkdirs dir-file)
-    (let [filename (format/filename name :timestamp? timestamp? :type "meta" :ext "edn")
+    (let [filename (format/filename (str name "-meta") :timestamp? timestamp? :type "meta" :ext "edn")
           filepath (str chosen-dir "/" filename)]
       (spit filepath (with-out-str (pp/pprint (:meta bucket))))
       (println (str "Metadata written to: " filepath))))

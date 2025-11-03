@@ -17,7 +17,7 @@
   - meta-out: output mode for metadata - :none, :stdout, :file, or :both (default :both)
   - error-out: output mode for errors - :none, :stdout, :file, or :both (default :both)
   - bucket-out: output mode for the entire bucket - :none, :stdout, :file, or :both (default :none)
-  - exit: exit behavior on error - :success, :fail, or :continue (default :fail)
+  - exit: exit behavior on error - :success, :fail, or :continue (default :continue)
   - out-dir: directory for file outputs (default: current directory)
   - require-value: boolean, when true checks if :value is nil (default false)
 
@@ -27,7 +27,7 @@
                   meta-out :both
                   error-out :both
                   bucket-out :both
-                  exit :fail
+                  exit :continue
                   require-value false}}]
   (let [name (:name bucket)
         log-formatter (extract/output-formatter log-out log/print {:out log-out :dir out-dir :name name})
